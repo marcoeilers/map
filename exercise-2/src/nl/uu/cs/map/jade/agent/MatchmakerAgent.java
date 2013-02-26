@@ -10,8 +10,10 @@ public class MatchmakerAgent extends Agent {
 	protected void setup() {
 		// get the arguments passed to this agent like this:
 		// java -cp jade.jar:. jade.Boot -gui -host localhost
-		// matchmaker:MatchmakerAgent("argument 1" arg2 3)
+		// "matchmaker:MatchmakerAgent(arg1,arg2)"
 		Object[] args = getArguments();
+		for (Object arg : args)
+			System.out.println(arg);
 		super.setup();
 	}
 
