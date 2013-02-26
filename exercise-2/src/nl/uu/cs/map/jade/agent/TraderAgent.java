@@ -3,16 +3,21 @@ package nl.uu.cs.map.jade.agent;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.List;
+import java.util.UUID;
 
 import nl.uu.cs.map.jade.ItemDescriptor;
 
+import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.Behaviour;
+import jade.core.behaviours.CyclicBehaviour;
 import jade.domain.DFService;
 import jade.domain.FIPAException;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
+import jade.lang.acl.MessageTemplate;
+import jade.lang.acl.UnreadableException;
 
 public class TraderAgent extends Agent {
 	private static final long serialVersionUID = 3698872544683250437L;
@@ -22,77 +27,87 @@ public class TraderAgent extends Agent {
 
 	@Override
 	protected void setup() {
-		addBehaviour(new ContactMatchmakerBehaviour(this));
-		addBehaviour(new MessageRespondBehaviour(this));
-	}
+		// add IDs to item descriptors
+		for (ItemDescriptor i : offers)
+			i.setAttribute("uid", UUID.randomUUID().toString());
+		for (ItemDescriptor i : requests)
+			i.setAttribute("uid", UUID.randomUUID().toString());
+		
+		// get the Matchmaker agent from DF
+		DFAgentDescription mmdesc = new DFAgentDescription();
+		ServiceDescription sd = new ServiceDescription();
+		sd.setType("matchmaking");
+		mmdesc.addServices(sd);
 
-	/**
-	 * Registers all offered and requested items with the matchmaker service.
-	 * Subsequently requests all relevant information from the matchmaker
-	 * service.
-	 * 
-	 */
-	private class ContactMatchmakerBehaviour extends Behaviour {
-		private static final long serialVersionUID = -2214859914596959774L;
-		private boolean done = false;
-		private Agent agent;
+		try {
+			DFAgentDescription[] matchmakers = DFService.search(this, mmdesc);
+			if (matchmakers.length != 1)
+				throw new IllegalStateException(
+						"There is less or more than one MatchmakerAgent in the system");
 
-		private ContactMatchmakerBehaviour(Agent a) {
-			this.agent = a;
-		}
-
-		@Override
-		public void action() {
-			// get the Matchmaker agent from DF
-			DFAgentDescription mmdesc = new DFAgentDescription();
-			ServiceDescription sd = new ServiceDescription();
-			sd.setType("matchmaking");
-			mmdesc.addServices(sd);
-
-			try {
-				DFAgentDescription[] matchmakers = DFService.search(agent,
-						mmdesc);
-				if (matchmakers.length != 1)
-					throw new IllegalStateException(
-							"There is less or more than one MatchmakerAgent in the system");
-
-				// register offered and requested items
-				ACLMessage registerOffersMsg = new ACLMessage(ACLMessage.INFORM);
-				registerOffersMsg.addReceiver(matchmakers[0].getName());
-				registerOffersMsg.setSender(getAID());
-				registerOffersMsg.setProtocol("registerOffers"); // TODO:
+			// register offered and requested items
+			ACLMessage registerOffersMsg = new ACLMessage(ACLMessage.INFORM);
+			registerOffersMsg.addReceiver(matchmakers[0].getName());
+			registerOffersMsg.setSender(getAID());
+			registerOffersMsg.setProtocol("registerOffers"); // TODO:
 																// change?
-				try {
-					registerOffersMsg.setContentObject((Serializable) offers);
-					send(registerOffersMsg);
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-
-				ACLMessage registerRequestsMsg = new ACLMessage(
-						ACLMessage.INFORM);
-				registerRequestsMsg.addReceiver(matchmakers[0].getName());
-				registerRequestsMsg.setSender(getAID());
-				registerRequestsMsg.setProtocol("registerRequests"); // TODO:
-																	// change?
-				try {
-					registerRequestsMsg
-							.setContentObject((Serializable) requests);
-					send(registerRequestsMsg);
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-
-			} catch (FIPAException e) {
+			try {
+				registerOffersMsg.setContentObject((Serializable) offers);
+				send(registerOffersMsg);
+			} catch (IOException e) {
 				e.printStackTrace();
 			}
-		}
 
-		@Override
-		public boolean done() {
-			return done;
-		}
+			ACLMessage registerRequestsMsg = new ACLMessage(ACLMessage.INFORM);
+			registerRequestsMsg.addReceiver(matchmakers[0].getName());
+			registerRequestsMsg.setSender(getAID());
+			registerRequestsMsg.setProtocol("registerRequests"); // TODO:
+																	// change?
+			try {
+				registerRequestsMsg.setContentObject((Serializable) requests);
+				send(registerRequestsMsg);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 
+			// get other traders which offer requested items and start a
+			// negotiation
+			for (ItemDescriptor i : requests) {
+				ACLMessage findOffersMsg = new ACLMessage(ACLMessage.REQUEST);
+				findOffersMsg.addReceiver(matchmakers[0].getName());
+				findOffersMsg.setSender(getAID());
+				findOffersMsg.setProtocol("getOffers");
+				findOffersMsg.setReplyWith(i.getAttribute("uid"));
+				try {
+					findOffersMsg.setContentObject(i);
+					send(findOffersMsg);
+					addBehaviour(new NegotiationBehaviour(i, false));
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+
+			}
+
+			// same for offered items
+			for (ItemDescriptor i : requests) {
+				ACLMessage findRequestsMsg = new ACLMessage(ACLMessage.REQUEST);
+				findRequestsMsg.addReceiver(matchmakers[0].getName());
+				findRequestsMsg.setSender(getAID());
+				findRequestsMsg.setProtocol("getRequests");
+				findRequestsMsg.setReplyWith(i.getAttribute("uid"));
+				try {
+					findRequestsMsg.setContentObject(i);
+					send(findRequestsMsg);
+					addBehaviour(new NegotiationBehaviour(i, true));
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+
+			}
+
+		} catch (FIPAException e) {
+			e.printStackTrace();
+		}
 	}
 
 	/**
@@ -101,24 +116,45 @@ public class TraderAgent extends Agent {
 	 * deal.
 	 * 
 	 */
-	private class MessageRespondBehaviour extends Behaviour {
+	private class NegotiationBehaviour extends CyclicBehaviour {
 		private static final long serialVersionUID = -3467911981451330057L;
-		private Agent agent;
+		private ItemDescriptor item;
+		private boolean buying;
+		private String id;
+		private List<AID> partners;
+		private boolean done = false;
 
-		private MessageRespondBehaviour(Agent a) {
-			this.agent = a;
+		private NegotiationBehaviour(ItemDescriptor item, boolean buying) {
+			this.item = item;
+			this.buying = buying;
+			this.id = item.getAttribute("uid");
 		}
 
 		@Override
 		public void action() {
-			// TODO Auto-generated method stub
-
-		}
-
-		@Override
-		public boolean done() {
-			// TODO Auto-generated method stub
-			return false;
+			MessageTemplate tmpl = MessageTemplate.MatchReplyWith(id);
+			ACLMessage msg = TraderAgent.this.blockingReceive(tmpl);
+			
+			// if response to getOffers/getRequests
+			if (msg.getProtocol().equals("setOffers") || msg.getProtocol().equals("setRequests")){
+				try {
+					partners = (List<AID>)msg.getContentObject();
+					
+					//TODO start negotiation
+				} catch (UnreadableException e) {
+					e.printStackTrace();
+				}
+				
+			// else if (counter)proposal
+			}else if (msg.getProtocol().equals("proposeDeal")){
+				//TODO
+			}else if (msg.getProtocol().equals("acceptDeal")){
+				//TODO
+				done=true;
+			}else if (msg.getProtocol().equals("rejectDeal")){
+				//TODO
+				done=true;
+			}
 		}
 
 	}

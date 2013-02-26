@@ -20,6 +20,10 @@ public class ItemDescriptor implements Serializable {
 		return attributes.containsKey(key);
 	}
 	
+	public void setAttribute(String key, String value){
+		attributes.put(key, value);
+	}
+	
 	public ItemDescriptor(String... strings){
 		if (strings.length%2 != 0)
 			throw new IllegalArgumentException("Missing value for a key: "+strings);
