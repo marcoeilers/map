@@ -165,7 +165,7 @@ public class MatchmakerAgent extends Agent {
 					throw new RuntimeException(e.getMessage(), e);
 				}
 
-				// create reply message with the reply with content that the
+				// create reply message with the reply-with content that the
 				// agent has chosen to be able to detect which of his requests
 				// has been answered
 				ACLMessage reply = new ACLMessage(ACLMessage.INFORM);
