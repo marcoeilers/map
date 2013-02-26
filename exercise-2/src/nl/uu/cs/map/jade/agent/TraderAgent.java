@@ -1,11 +1,5 @@
 package nl.uu.cs.map.jade.agent;
 
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.List;
-
-import nl.uu.cs.map.jade.ItemDescriptor;
-
 import jade.core.Agent;
 import jade.core.behaviours.Behaviour;
 import jade.domain.DFService;
@@ -13,6 +7,12 @@ import jade.domain.FIPAException;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
+
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.List;
+
+import nl.uu.cs.map.jade.ItemDescriptor;
 
 public class TraderAgent extends Agent {
 	private static final long serialVersionUID = 3698872544683250437L;
@@ -61,7 +61,7 @@ public class TraderAgent extends Agent {
 				registerOffersMsg.addReceiver(matchmakers[0].getName());
 				registerOffersMsg.setSender(getAID());
 				registerOffersMsg.setProtocol("registerOffers"); // TODO:
-																// change?
+																	// change?
 				try {
 					registerOffersMsg.setContentObject((Serializable) offers);
 					send(registerOffersMsg);
@@ -74,7 +74,7 @@ public class TraderAgent extends Agent {
 				registerRequestsMsg.addReceiver(matchmakers[0].getName());
 				registerRequestsMsg.setSender(getAID());
 				registerRequestsMsg.setProtocol("registerRequests"); // TODO:
-																	// change?
+																		// change?
 				try {
 					registerRequestsMsg
 							.setContentObject((Serializable) requests);
@@ -86,6 +86,8 @@ public class TraderAgent extends Agent {
 			} catch (FIPAException e) {
 				e.printStackTrace();
 			}
+
+			done = true;
 		}
 
 		@Override
