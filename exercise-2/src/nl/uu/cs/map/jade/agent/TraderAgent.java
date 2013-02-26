@@ -15,6 +15,7 @@ import jade.lang.acl.UnreadableException;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.UUID;
 
 import nl.uu.cs.map.jade.ItemDescriptor;
@@ -116,7 +117,7 @@ public class TraderAgent extends Agent {
 		private ItemDescriptor item;
 		private boolean buying;
 		private String id;
-		private List<AID> partners;
+		private List<Entry> partners;
 		private boolean done = false;
 
 		private NegotiationBehaviour(ItemDescriptor item, boolean buying) {
@@ -133,7 +134,7 @@ public class TraderAgent extends Agent {
 			// if response to getOffers/getRequests
 			if (msg.getProtocol().equals("setOffers") || msg.getProtocol().equals("setRequests")){
 				try {
-					partners = (List<AID>)msg.getContentObject();
+					partners = (List<Entry>)msg.getContentObject();
 					
 					//TODO start negotiation
 				} catch (UnreadableException e) {
