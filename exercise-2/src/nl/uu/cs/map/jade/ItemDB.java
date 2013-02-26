@@ -7,8 +7,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import nl.uu.cs.map.jade.agent.TraderAgent;
-
 public class ItemDB {
 
 	/**
@@ -36,11 +34,11 @@ public class ItemDB {
 	 * @param item
 	 * @param agent
 	 */
-	public void addOffer(ItemDescriptor item, TraderAgent agent) {
+	public void addOffer(ItemDescriptor item, AID agent) {
 		List<AID> sellers = offeredItems.get(item);
 		if (sellers == null)
 			sellers = new ArrayList<AID>();
-		sellers.add(agent.getAID());
+		sellers.add(agent);
 	}
 
 	/**
@@ -48,11 +46,18 @@ public class ItemDB {
 	 * 
 	 * @param item
 	 * @param agent
+	 * @throws IllegalArgumentException
+	 *             if the item or the seller is not registered
 	 */
-	public void removeOffer(ItemDescriptor item, TraderAgent agent) {
+	public void removeOffer(ItemDescriptor item, AID agent) {
 		List<AID> sellers = offeredItems.get(item);
 		if (sellers != null)
-			sellers.remove(agent.getAID());
+			if (!sellers.remove(agent))
+				throw new IllegalArgumentException(
+						"The trader is not registered as a seller for this item");
+			else
+				throw new IllegalArgumentException(
+						"This item is not registered");
 	}
 
 	/**
@@ -61,11 +66,11 @@ public class ItemDB {
 	 * @param item
 	 * @param agent
 	 */
-	public void addRequest(ItemDescriptor item, TraderAgent agent) {
+	public void addRequest(ItemDescriptor item, AID agent) {
 		List<AID> buyers = requestedItems.get(item);
 		if (buyers == null)
 			buyers = new ArrayList<AID>();
-		buyers.add(agent.getAID());
+		buyers.add(agent);
 	}
 
 	/**
@@ -73,11 +78,18 @@ public class ItemDB {
 	 * 
 	 * @param item
 	 * @param agent
+	 * @throws IllegalArgumentException
+	 *             if the item or the buyer is not registered
 	 */
-	public void removeRequest(ItemDescriptor item, TraderAgent agent) {
+	public void removeRequest(ItemDescriptor item, AID agent) {
 		List<AID> buyers = requestedItems.get(item);
 		if (buyers != null)
-			buyers.remove(agent.getAID());
+			if (!buyers.remove(agent))
+				throw new IllegalArgumentException(
+						"The trader is not registered as a buyer for this item");
+			else
+				throw new IllegalArgumentException(
+						"This item is not registered");
 	}
 
 	/**
