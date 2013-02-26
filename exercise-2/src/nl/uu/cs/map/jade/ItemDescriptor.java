@@ -18,20 +18,11 @@ public class ItemDescriptor implements Serializable {
 	private Map<String, String> attributes = new HashMap<String, String>();
 	private String uid;
 
-	public String getAttribute(String key) {
-		return attributes.get(key);
-	}
+	private double priceLimit;
 
-	public boolean hasAttribute(String key) {
-		return attributes.containsKey(key);
-	}
-
-	public void setAttribute(String key, String value) {
-		attributes.put(key, value);
-	}
-
-	public Set<Entry<String, String>> getAttributes() {
-		return attributes.entrySet();
+	public ItemDescriptor() {
+		UUID id = UUID.randomUUID();
+		uid = id.toString();
 	}
 
 	public ItemDescriptor(String... strings) {
@@ -44,13 +35,42 @@ public class ItemDescriptor implements Serializable {
 		}
 	}
 
-	public String getUid() {
-		return uid;
+	public ItemDescriptor(double limit) {
+		this();
+		this.priceLimit = limit;
 	}
 
-	public ItemDescriptor() {
-		UUID id = UUID.randomUUID();
-		uid = id.toString();
+	public ItemDescriptor(double limit, String... strings) {
+		this(strings);
+		this.priceLimit = limit;
+	}
+
+	public String getAttribute(String key) {
+		return attributes.get(key);
+	}
+
+	public void setAttribute(String key, String value) {
+		attributes.put(key, value);
+	}
+
+	public boolean hasAttribute(String key) {
+		return attributes.containsKey(key);
+	}
+
+	public Set<Entry<String, String>> getAttributes() {
+		return attributes.entrySet();
+	}
+
+	public void setPriceLimit(double limit) {
+		this.priceLimit = limit;
+	}
+
+	public double getPriceLimit() {
+		return priceLimit;
+	}
+
+	public String getUid() {
+		return uid;
 	}
 
 	/**
