@@ -1,5 +1,6 @@
 package nl.uu.cs.map.jade;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -7,7 +8,7 @@ import java.util.Map;
  * Describes an item offered or requested in the market place.
  *
  */
-public class ItemDescriptor {
+public class ItemDescriptor implements Serializable {
 	
 	private Map<String, String> attributes = new HashMap<String, String>();
 	
