@@ -1,11 +1,18 @@
 package nl.uu.cs.map.jade.agent;
 
+import java.util.List;
+
+import nl.uu.cs.map.jade.ItemDescriptor;
+
 import jade.core.Agent;
 import jade.core.behaviours.Behaviour;
 
 public class TraderAgent extends Agent {
 	private static final long serialVersionUID = 3698872544683250437L;
 
+	private List<ItemDescriptor> offers;
+	private List<ItemDescriptor> requests;
+	
 	@Override
 	protected void setup() {
 		addBehaviour(new ContactMatchmakerBehaviour());
