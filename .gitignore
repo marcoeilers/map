@@ -4,3 +4,8 @@
 *.jar
 *.war
 *.ear
+
+# Latex byproducts #
+assignment-2.log
+assignment-2.aux
+assignment-2.fdb_latexmk
