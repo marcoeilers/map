@@ -16,25 +16,6 @@ public class MatchmakerAgent extends Agent {
 
 	private static final long serialVersionUID = 8758414317735123415L;
 
-	/**
-	 * Result of a matchmaking request containing the specified item and one
-	 * list of buyers and sellers each.
-	 * 
-	 * @author robert
-	 * 
-	 */
-	public static class MatchMakingResult {
-		public ItemDescriptor item;
-		public List<AID> buyers, sellers;
-
-		public MatchMakingResult(ItemDescriptor item, List<AID> buyers,
-				List<AID> sellers) {
-			this.item = item;
-			this.buyers = buyers;
-			this.sellers = sellers;
-		}
-	}
-
 	private ItemDB itemDB;
 
 	@Override
@@ -76,6 +57,25 @@ public class MatchmakerAgent extends Agent {
 	private MatchMakingResult makeMatch(ItemDescriptor item) {
 		return new MatchMakingResult(item, itemDB.getBuyers(item),
 				itemDB.getSellers(item));
+	}
+
+	/**
+	 * Result of a matchmaking request containing the specified item and one
+	 * list of buyers and sellers each.
+	 * 
+	 * @author robert
+	 * 
+	 */
+	public static class MatchMakingResult {
+		public ItemDescriptor item;
+		public List<AID> buyers, sellers;
+
+		public MatchMakingResult(ItemDescriptor item, List<AID> buyers,
+				List<AID> sellers) {
+			this.item = item;
+			this.buyers = buyers;
+			this.sellers = sellers;
+		}
 	}
 
 }
