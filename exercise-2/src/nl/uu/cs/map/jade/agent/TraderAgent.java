@@ -1,15 +1,8 @@
 package nl.uu.cs.map.jade.agent;
 
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.List;
-import java.util.UUID;
-
-import nl.uu.cs.map.jade.ItemDescriptor;
 
 import jade.core.AID;
 import jade.core.Agent;
-import jade.core.behaviours.Behaviour;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.domain.DFService;
 import jade.domain.FIPAException;
@@ -18,6 +11,13 @@ import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import jade.lang.acl.UnreadableException;
+
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.List;
+import java.util.UUID;
+
+import nl.uu.cs.map.jade.ItemDescriptor;
 
 public class TraderAgent extends Agent {
 	private static final long serialVersionUID = 3698872544683250437L;
@@ -85,7 +85,6 @@ public class TraderAgent extends Agent {
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
-
 			}
 
 			// same for offered items
@@ -104,10 +103,11 @@ public class TraderAgent extends Agent {
 				}
 
 			}
-
-		} catch (FIPAException e) {
+		}catch(FIPAException e){
 			e.printStackTrace();
 		}
+
+
 	}
 
 	/**
