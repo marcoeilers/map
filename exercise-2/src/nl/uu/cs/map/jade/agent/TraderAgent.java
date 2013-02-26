@@ -27,11 +27,6 @@ public class TraderAgent extends Agent {
 
 	@Override
 	protected void setup() {
-		// add IDs to item descriptors
-		for (ItemDescriptor i : offers)
-			i.setAttribute("uid", UUID.randomUUID().toString());
-		for (ItemDescriptor i : requests)
-			i.setAttribute("uid", UUID.randomUUID().toString());
 		
 		// get the Matchmaker agent from DF
 		DFAgentDescription mmdesc = new DFAgentDescription();
@@ -77,7 +72,7 @@ public class TraderAgent extends Agent {
 				findOffersMsg.addReceiver(matchmakers[0].getName());
 				findOffersMsg.setSender(getAID());
 				findOffersMsg.setProtocol("getOffers");
-				findOffersMsg.setReplyWith(i.getAttribute("uid"));
+				findOffersMsg.setReplyWith(i.getUid());
 				try {
 					findOffersMsg.setContentObject(i);
 					send(findOffersMsg);
@@ -93,7 +88,7 @@ public class TraderAgent extends Agent {
 				findRequestsMsg.addReceiver(matchmakers[0].getName());
 				findRequestsMsg.setSender(getAID());
 				findRequestsMsg.setProtocol("getRequests");
-				findRequestsMsg.setReplyWith(i.getAttribute("uid"));
+				findRequestsMsg.setReplyWith(i.getUid());
 				try {
 					findRequestsMsg.setContentObject(i);
 					send(findRequestsMsg);
@@ -127,7 +122,7 @@ public class TraderAgent extends Agent {
 		private NegotiationBehaviour(ItemDescriptor item, boolean buying) {
 			this.item = item;
 			this.buying = buying;
-			this.id = item.getAttribute("uid");
+			this.id = item.getUid();
 		}
 
 		@Override
