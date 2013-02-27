@@ -53,16 +53,40 @@ public class TraderAgent extends Agent {
 
 		// construct offers and requests
 		this.offers = new ArrayList<ItemDescriptor>();
-		String[] offers = properties.getProperty("items.offered").split("\\|");
-		for (String offer : offers) {
-			ItemDescriptor item = new ItemDescriptor();
-			String[] attributes = offer.split(";");
-			for (String attribute : attributes) {
-				String[] keyValue = attribute.split(":");
-				item.setAttribute(keyValue[0].trim(), keyValue[1].trim());
+		String offersString = properties.getProperty("items.offered");
+		if (offersString != null) {
+			String[] offers = offersString.split("\\|");
+			for (String offer : offers) {
+				ItemDescriptor item = new ItemDescriptor();
+				String[] attributes = offer.split(";");
+				for (String attribute : attributes) {
+					String[] keyValue = attribute.split(":");
+					item.setAttribute(keyValue[0].trim(), keyValue[1].trim());
+				}
+				this.offers.add(item);
 			}
-			this.offers.add(item);
 		}
+
+		for (ItemDescriptor i : offers)
+			System.out.println(i);
+
+		this.requests = new ArrayList<ItemDescriptor>();
+		String requestsString = properties.getProperty("items.requested");
+		if (requestsString != null) {
+			String[] requests = requestsString.split("\\|");
+			for (String request : requests) {
+				ItemDescriptor item = new ItemDescriptor();
+				String[] attributes = request.split(";");
+				for (String attribute : attributes) {
+					String[] keyValue = attribute.split(":");
+					item.setAttribute(keyValue[0].trim(), keyValue[1].trim());
+				}
+				this.requests.add(item);
+			}
+		}
+
+		for (ItemDescriptor i : requests)
+			System.out.println(i);
 
 		// get the Matchmaker agent from DF
 		DFAgentDescription mmdesc = new DFAgentDescription();
@@ -119,7 +143,7 @@ public class TraderAgent extends Agent {
 			}
 
 			// same for offered items
-			for (ItemDescriptor i : requests) {
+			for (ItemDescriptor i : offers) {
 				ACLMessage findRequestsMsg = new ACLMessage(ACLMessage.REQUEST);
 				findRequestsMsg.addReceiver(matchmakers[0].getName());
 				findRequestsMsg.setSender(getAID());
