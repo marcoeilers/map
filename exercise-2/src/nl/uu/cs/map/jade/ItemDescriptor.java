@@ -91,4 +91,19 @@ public class ItemDescriptor implements Serializable {
 		}
 		return contains;
 	}
+
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		sb.append(uid);
+		sb.append(" { ");
+		for (Entry<String, String> entry : attributes.entrySet()) {
+			sb.append(" > ");
+			sb.append(entry.getKey());
+			sb.append(" : ");
+			sb.append(entry.getValue());
+		}
+		sb.append(" }");
+		return sb.toString();
+	}
 }
