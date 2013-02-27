@@ -11,11 +11,15 @@ import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import jade.lang.acl.UnreadableException;
 
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.Reader;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Properties;
 import java.util.Set;
 
 import nl.uu.cs.map.jade.ItemDescriptor;
@@ -29,6 +33,36 @@ public class TraderAgent extends Agent {
 
 	@Override
 	protected void setup() {
+
+		// retrieve the file name of the initialization file
+		Object[] args = getArguments();
+		if (args.length != 1)
+			throw new IllegalArgumentException(
+					"Expecting exactly one argument: the name of the initialization file");
+
+		// read the properties file
+		Properties properties = new Properties();
+		Reader reader;
+		try {
+			reader = new FileReader((String) args[0]);
+			properties.load(reader);
+			reader.close();
+		} catch (IOException e) {
+			throw new RuntimeException(e.getMessage(), e);
+		}
+
+		// construct offers and requests
+		this.offers = new ArrayList<ItemDescriptor>();
+		String[] offers = properties.getProperty("items.offered").split("\\|");
+		for (String offer : offers) {
+			ItemDescriptor item = new ItemDescriptor();
+			String[] attributes = offer.split(";");
+			for (String attribute : attributes) {
+				String[] keyValue = attribute.split(":");
+				item.setAttribute(keyValue[0].trim(), keyValue[1].trim());
+			}
+			this.offers.add(item);
+		}
 
 		// get the Matchmaker agent from DF
 		DFAgentDescription mmdesc = new DFAgentDescription();
