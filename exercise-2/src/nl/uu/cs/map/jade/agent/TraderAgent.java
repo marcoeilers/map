@@ -3,7 +3,6 @@ package nl.uu.cs.map.jade.agent;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.Behaviour;
-import jade.core.behaviours.CyclicBehaviour;
 import jade.domain.DFService;
 import jade.domain.FIPAException;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
@@ -231,26 +230,33 @@ public class TraderAgent extends Agent {
 				}
 			} else if (msg.getProtocol().equals("acceptDeal")) {
 				if (!msg.getSender().equals(waitFor))
-					throw new IllegalStateException("Got accept from someone I'm not waiting for.");
+					throw new IllegalStateException(
+							"Got accept from someone I'm not waiting for.");
 				waitFor = null;
 				Negotiation n = getNegotiation(msg.getConversationId());
 				if (n == null)
-					throw new IllegalStateException("Got accept without offering anything.");
+					throw new IllegalStateException(
+							"Got accept without offering anything.");
 				for (Negotiation toReject : negotiations) {
 					if (toReject != n && toReject.isNeedsResponse()) {
 						rejectDeal(toReject.getAid(), toReject.getUid());
 					}
 				}
-				double offeredPrice = Double.parseDouble(msg.getContent());				
-				System.out.println("Deal closed! "+getAID()+ (buying? " bought item from " : " sold item to ")+msg.getSender()+" for "+offeredPrice+" money units. Item was "+item.toString());
+				double offeredPrice = Double.parseDouble(msg.getContent());
+				System.out.println("Deal closed! " + getAID()
+						+ (buying ? " bought item from " : " sold item to ")
+						+ msg.getSender() + " for " + offeredPrice
+						+ " money units. Item was " + item.toString());
 				done = true;
 			} else if (msg.getProtocol().equals("rejectDeal")) {
 				if (!msg.getSender().equals(waitFor))
-					throw new IllegalStateException("Got rejection from someone I'm not waiting for.");
+					throw new IllegalStateException(
+							"Got rejection from someone I'm not waiting for.");
 				waitFor = null;
 				Negotiation n = getNegotiation(msg.getConversationId());
 				if (n == null)
-					throw new IllegalStateException("Got rejection without offering anything.");
+					throw new IllegalStateException(
+							"Got rejection without offering anything.");
 				negotiations.remove(n);
 				initiateNextRound();
 			}
@@ -274,7 +280,7 @@ public class TraderAgent extends Agent {
 			msg.setConversationId(id);
 			msg.addReceiver(recipient);
 			msg.setSender(getAID());
-			msg.setContent(""+price);
+			msg.setContent("" + price);
 			msg.setProtocol("proposeDeal");
 			send(msg);
 		}
@@ -285,7 +291,7 @@ public class TraderAgent extends Agent {
 			msg.setConversationId(id);
 			msg.addReceiver(recipient);
 			msg.setSender(getAID());
-			msg.setContent(""+price);
+			msg.setContent("" + price);
 			msg.setProtocol("acceptDeal");
 			send(msg);
 		}
@@ -299,14 +305,13 @@ public class TraderAgent extends Agent {
 			msg.setProtocol("rejectDeal");
 			send(msg);
 		}
-		
-		private void initiateNextRound(){
+
+		private void initiateNextRound() {
 			Negotiation bestN = getBestNegotiation();
 			if (buying) {
 				double newProposal = bestN.getLastOffer() + 1.0;
 				if (newProposal < item.getPriceLimit()) {
-					proposeDeal(bestN.getAid(), bestN.getUid(),
-							newProposal);
+					proposeDeal(bestN.getAid(), bestN.getUid(), newProposal);
 					bestN.setLastOffer(newProposal);
 					bestN.setNeedsResponse(false);
 					waitFor = bestN.getAid();
@@ -315,8 +320,7 @@ public class TraderAgent extends Agent {
 			} else {
 				double newProposal = bestN.getLastOffer() - 2.0;
 				if (newProposal > item.getPriceLimit()) {
-					proposeDeal(bestN.getAid(), bestN.getUid(),
-							newProposal);
+					proposeDeal(bestN.getAid(), bestN.getUid(), newProposal);
 					bestN.setLastOffer(newProposal);
 					bestN.setNeedsResponse(false);
 					waitFor = bestN.getAid();
