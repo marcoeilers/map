@@ -48,5 +48,4 @@ public class Negotiation {
 	public void setNeedsResponse(boolean needsResponse) {
 		this.needsResponse = needsResponse;
 	}
-
 }
