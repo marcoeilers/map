@@ -1,6 +1,5 @@
 package nl.uu.cs.map.jade.agent;
 
-
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
@@ -14,11 +13,14 @@ import jade.lang.acl.UnreadableException;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.UUID;
 
 import nl.uu.cs.map.jade.ItemDescriptor;
+import nl.uu.cs.map.jade.Negotiation;
 
 public class TraderAgent extends Agent {
 	private static final long serialVersionUID = 3698872544683250437L;
@@ -28,7 +30,7 @@ public class TraderAgent extends Agent {
 
 	@Override
 	protected void setup() {
-		
+
 		// get the Matchmaker agent from DF
 		DFAgentDescription mmdesc = new DFAgentDescription();
 		ServiceDescription sd = new ServiceDescription();
@@ -99,10 +101,9 @@ public class TraderAgent extends Agent {
 				}
 
 			}
-		}catch(FIPAException e){
+		} catch (FIPAException e) {
 			e.printStackTrace();
 		}
-
 
 	}
 
@@ -117,8 +118,10 @@ public class TraderAgent extends Agent {
 		private ItemDescriptor item;
 		private boolean buying;
 		private String id;
-		private List<Entry> partners;
+		private List<Entry<String, AID>> partners;
 		private boolean done = false;
+
+		private Set<Negotiation> negotiations = new HashSet<Negotiation>();
 
 		private NegotiationBehaviour(ItemDescriptor item, boolean buying) {
 			this.item = item;
@@ -126,32 +129,90 @@ public class TraderAgent extends Agent {
 			this.id = item.getUid();
 		}
 
+		@SuppressWarnings("unchecked")
 		@Override
 		public void action() {
-			MessageTemplate tmpl = MessageTemplate.MatchReplyWith(id);
-			ACLMessage msg = TraderAgent.this.blockingReceive(tmpl);
-			
-			// if response to getOffers/getRequests
-			if (msg.getProtocol().equals("setOffers") || msg.getProtocol().equals("setRequests")){
-				try {
-					partners = (List<Entry>)msg.getContentObject();
-					
-					//TODO start negotiation
-				} catch (UnreadableException e) {
-					e.printStackTrace();
+			if (!done) {
+				MessageTemplate tmpl = MessageTemplate.MatchReplyWith(id);
+				ACLMessage msg = TraderAgent.this.blockingReceive(tmpl);
+
+				// if response to getOffers/getRequests
+				if (msg.getProtocol().equals("setOffers")
+						|| msg.getProtocol().equals("setRequests")) {
+					try {
+						partners = (List<Entry<String, AID>>) msg
+								.getContentObject();
+
+						// create negotiation information
+						for (Entry<String, AID> e : partners) {
+							Negotiation n = new Negotiation(e.getKey(),
+									e.getValue(),
+									buying ? 0.5 * item.getPriceLimit()
+											: 2.0 * item.getPriceLimit(), false);
+							negotiations.add(n);
+						}
+
+						// start by messaging one of them
+						Negotiation best = null;
+						double bestPrice = buying ? Double.MAX_VALUE
+								: Double.MIN_VALUE;
+						for (Negotiation n : negotiations) {
+							if (buying) {
+								if (n.getLastOffer() < bestPrice) {
+									best = n;
+									bestPrice = n.getLastOffer();
+								}
+							} else {
+								if (n.getLastOffer() > bestPrice) {
+									best = n;
+									bestPrice = n.getLastOffer();
+								}
+							}
+						}
+
+						if (best != null) {
+							// TODO check if new offer would violate limit
+							
+							// if not, send message 
+						}
+
+					} catch (UnreadableException e) {
+						e.printStackTrace();
+					}
+
+					// else if (counter)proposal
+				} else if (msg.getProtocol().equals("proposeDeal")) {
+					// get Negotiation object
+					Negotiation n = getNegotiation(msg.getConversationId());
+					if (n != null){
+						// TODO
+						// check if acceptable
+						
+						// otherwise, check if counterproposal possible
+						
+						// otherwise reject
+					}else{
+						// TODO create new Negotiation object
+					}
+				} else if (msg.getProtocol().equals("acceptDeal")) {
+					// TODO
+					done = true;
+				} else if (msg.getProtocol().equals("rejectDeal")) {
+					// TODO
+					done = true;
 				}
-				
-			// else if (counter)proposal
-			}else if (msg.getProtocol().equals("proposeDeal")){
-				//TODO
-			}else if (msg.getProtocol().equals("acceptDeal")){
-				//TODO
-				done=true;
-			}else if (msg.getProtocol().equals("rejectDeal")){
-				//TODO
-				done=true;
 			}
 		}
-
+		
+		private Negotiation getNegotiation(String uid){
+			Negotiation result = null;
+			for (Negotiation n : negotiations){
+				if (n.getUid().equals(uid)){
+					result = n;
+					break;
+				}
+			}
+			return result;
+		}
 	}
 }
