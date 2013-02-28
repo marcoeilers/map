@@ -212,7 +212,7 @@ public class TraderAgent extends Agent {
 				try {
 					List<Entry<String, AID>> partners = (List<Entry<String, AID>>) msg
 							.getContentObject();
-				
+
 					// create negotiation information
 					for (Entry<String, AID> e : partners) {
 						Negotiation n = new Negotiation(e.getKey(),
