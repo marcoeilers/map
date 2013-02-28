@@ -182,8 +182,8 @@ public class MatchmakerAgent extends Agent {
 						throw new RuntimeException(e.getMessage(), e);
 					}
 					send(reply);
-					System.out
-							.println("Matchmaker responded to getOffers request.");
+					//System.out
+					//		.println("Matchmaker responded to getOffers request.");
 				} else if ("getRequests".equals(protocol)) {
 					// reply with a list of traders that request this item
 					reply.setProtocol("setRequests");
@@ -194,8 +194,8 @@ public class MatchmakerAgent extends Agent {
 						throw new RuntimeException(e.getMessage(), e);
 					}
 					send(reply);
-					System.out
-							.println("Matchmaker responded to getRequests request.");
+					//System.out
+					//		.println("Matchmaker responded to getRequests request.");
 
 				}
 			} else

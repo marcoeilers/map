@@ -91,6 +91,10 @@ public class ItemDescriptor implements Serializable {
 		}
 		return contains;
 	}
+	
+	public String getType(){
+		return attributes.get("type");
+	}
 
 	@Override
 	public String toString() {
