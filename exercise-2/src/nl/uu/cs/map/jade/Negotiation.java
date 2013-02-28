@@ -8,7 +8,7 @@ public class Negotiation {
 	private double lastOffer;
 	private boolean needsResponse;
 	private boolean initialSent = false;
-
+	
 	public Negotiation(String uid, AID aid, double lastOffer,
 			boolean needsResponse) {
 		super();
