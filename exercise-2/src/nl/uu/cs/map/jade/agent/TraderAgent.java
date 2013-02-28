@@ -77,7 +77,7 @@ public class TraderAgent extends Agent {
 			try {
 				registerOffersMsg.setContentObject((Serializable) offers);
 				send(registerOffersMsg);
-				System.out.println("Registering offers: "+getAID());
+				System.out.println("Registering offers: " + getAID());
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -90,7 +90,7 @@ public class TraderAgent extends Agent {
 			try {
 				registerRequestsMsg.setContentObject((Serializable) requests);
 				send(registerRequestsMsg);
-				System.out.println("Registering requests: "+getAID());
+				System.out.println("Registering requests: " + getAID());
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -106,7 +106,8 @@ public class TraderAgent extends Agent {
 				try {
 					findOffersMsg.setContentObject(i);
 					send(findOffersMsg);
-					System.out.println("Getting offers for item "+i+": "+getAID());
+					System.out.println("Getting offers for item " + i + ": "
+							+ getAID());
 					addBehaviour(new NegotiationBehaviour(i, false));
 				} catch (IOException e) {
 					e.printStackTrace();
@@ -123,7 +124,8 @@ public class TraderAgent extends Agent {
 				try {
 					findRequestsMsg.setContentObject(i);
 					send(findRequestsMsg);
-					System.out.println("Getting requests for item "+i+": "+getAID());
+					System.out.println("Getting requests for item " + i + ": "
+							+ getAID());
 					addBehaviour(new NegotiationBehaviour(i, true));
 				} catch (IOException e) {
 					e.printStackTrace();
@@ -179,7 +181,6 @@ public class TraderAgent extends Agent {
 		private ItemDescriptor item;
 		private boolean buying;
 		private String id;
-		private List<Entry<String, AID>> partners;
 		private boolean done = false;
 		private AID waitFor = null; // AID of the partner for who we are
 									// currently waiting for.
@@ -209,9 +210,9 @@ public class TraderAgent extends Agent {
 			if (msg.getProtocol().equals("setOffers")
 					|| msg.getProtocol().equals("setRequests")) {
 				try {
-					partners = (List<Entry<String, AID>>) msg
+					List<Entry<String, AID>> partners = (List<Entry<String, AID>>) msg
 							.getContentObject();
-
+				
 					// create negotiation information
 					for (Entry<String, AID> e : partners) {
 						Negotiation n = new Negotiation(e.getKey(),
@@ -220,6 +221,9 @@ public class TraderAgent extends Agent {
 										: 2.0 * item.getPriceLimit(), false);
 						negotiations.add(n);
 					}
+
+					System.out.println("Created negotiations. Size is "
+							+ negotiations.size());
 
 					// start by messaging one of them
 					initiateNextRound();
@@ -261,7 +265,7 @@ public class TraderAgent extends Agent {
 							return;
 						}
 					} else {
-						double newProposal = bestN.getLastOffer() - 2.0;
+						double newProposal = bestN.getLastOffer() - 1.0;
 						if (newProposal > offeredPrice
 								&& newProposal > item.getPriceLimit()) {
 							proposeDeal(bestN.getAid(), bestN.getUid(),
@@ -345,7 +349,9 @@ public class TraderAgent extends Agent {
 			msg.setContent("" + price);
 			msg.setProtocol("proposeDeal");
 			send(msg);
-			System.out.println("Proposing to "+(buying?"buy":"sell")+" item "+item+": "+getAID()+". Partner: "+recipient+". Price: "+price);
+			System.out.println("Proposing to " + (buying ? "buy" : "sell")
+					+ " item " + item + ": " + getAID() + ". Partner: "
+					+ recipient + ". Price: " + price);
 		}
 
 		private void acceptDeal(AID recipient, String uid, double price) {
@@ -356,7 +362,9 @@ public class TraderAgent extends Agent {
 			msg.setSender(getAID());
 			msg.setContent("" + price);
 			msg.setProtocol("acceptDeal");
-			System.out.println("Accepting proposal from "+recipient+" for item "+item+": "+getAID()+". Price: "+price);
+			System.out.println("Accepting proposal from " + recipient
+					+ " for item " + item + ": " + getAID() + ". Price: "
+					+ price);
 			send(msg);
 		}
 
@@ -367,29 +375,32 @@ public class TraderAgent extends Agent {
 			msg.addReceiver(recipient);
 			msg.setSender(getAID());
 			msg.setProtocol("rejectDeal");
-			System.out.println("Rejecting proposal from "+recipient+" for item "+item+": "+getAID());
+			System.out.println("Rejecting proposal from " + recipient
+					+ " for item " + item + ": " + getAID());
 			send(msg);
 		}
 
 		private void initiateNextRound() {
 			Negotiation bestN = getBestNegotiation();
-			if (buying) {
-				double newProposal = bestN.getLastOffer() + 1.0;
-				if (newProposal < item.getPriceLimit()) {
-					proposeDeal(bestN.getAid(), bestN.getUid(), newProposal);
-					bestN.setLastOffer(newProposal);
-					bestN.setNeedsResponse(false);
-					waitFor = bestN.getAid();
-					return;
-				}
-			} else {
-				double newProposal = bestN.getLastOffer() - 2.0;
-				if (newProposal > item.getPriceLimit()) {
-					proposeDeal(bestN.getAid(), bestN.getUid(), newProposal);
-					bestN.setLastOffer(newProposal);
-					bestN.setNeedsResponse(false);
-					waitFor = bestN.getAid();
-					return;
+			if (bestN != null) {
+				if (buying) {
+					double newProposal = bestN.getLastOffer() + 1.0;
+					if (newProposal < item.getPriceLimit()) {
+						proposeDeal(bestN.getAid(), bestN.getUid(), newProposal);
+						bestN.setLastOffer(newProposal);
+						bestN.setNeedsResponse(false);
+						waitFor = bestN.getAid();
+						return;
+					}
+				} else {
+					double newProposal = bestN.getLastOffer() - 1.0;
+					if (newProposal > item.getPriceLimit()) {
+						proposeDeal(bestN.getAid(), bestN.getUid(), newProposal);
+						bestN.setLastOffer(newProposal);
+						bestN.setNeedsResponse(false);
+						waitFor = bestN.getAid();
+						return;
+					}
 				}
 			}
 		}

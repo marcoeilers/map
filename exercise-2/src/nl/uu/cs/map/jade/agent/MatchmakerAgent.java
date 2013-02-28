@@ -147,7 +147,7 @@ public class MatchmakerAgent extends Agent {
 		private boolean done = false;
 
 		// only receive matchmaking messages
-		private MessageTemplate matchmakingTemplate = MessageTemplate.and(
+		private MessageTemplate matchmakingTemplate = MessageTemplate.or(
 				MessageTemplate.MatchProtocol("getOffers"),
 				MessageTemplate.MatchProtocol("getRequests"));
 
@@ -182,6 +182,7 @@ public class MatchmakerAgent extends Agent {
 						throw new RuntimeException(e.getMessage(), e);
 					}
 					send(reply);
+					System.out.println("Matchmaker responded to getOffers request.");
 				} else if ("getRequests".equals(protocol)) {
 					// reply with a list of traders that request this item
 					reply.setProtocol("setRequests");
@@ -192,6 +193,8 @@ public class MatchmakerAgent extends Agent {
 						throw new RuntimeException(e.getMessage(), e);
 					}
 					send(reply);
+					System.out.println("Matchmaker responded to getRequests request.");
+
 				}
 			} else
 				block();
