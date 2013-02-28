@@ -25,17 +25,24 @@ import java.util.Set;
 import nl.uu.cs.map.jade.ItemDescriptor;
 import nl.uu.cs.map.jade.Negotiation;
 
+/**
+ * An agent who buys and/or sells items on the market place.
+ * 
+ */
 public class TraderAgent extends Agent {
+	// the minimal difference between two offers
 	public static final double NEGOTIATION_STEP = 0.5;
+
+	// inverse of how much the agent should get closer to its limit,
+	// 4.0 == 25% closer in each step
 	public static final double NEGOTIATION_STEP_PCT = 4.0;
 
-	
-	
 	private static final long serialVersionUID = 3698872544683250437L;
 
+	// items this agent wants to buy/sell
 	private List<ItemDescriptor> offers;
 	private List<ItemDescriptor> requests;
-	
+
 	private AID matchmaker;
 
 	@Override
@@ -62,12 +69,10 @@ public class TraderAgent extends Agent {
 		requests = parseItems(properties.getProperty("items.requested"));
 
 		try {
-			Thread.sleep(Integer.parseInt((String)args[1]));
+			Thread.sleep(Integer.parseInt((String) args[1]));
 		} catch (NumberFormatException e1) {
-			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		} catch (InterruptedException e1) {
-			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
 
@@ -83,19 +88,20 @@ public class TraderAgent extends Agent {
 				throw new IllegalStateException(
 						"Expecting exactly one matchmaker but found "
 								+ matchmakers.length);
-			
+
 			matchmaker = matchmakers[0].getName();
 
 			// register offered and requested items
 			ACLMessage registerOffersMsg = new ACLMessage(ACLMessage.INFORM);
 			registerOffersMsg.addReceiver(matchmakers[0].getName());
 			registerOffersMsg.setSender(getAID());
-			registerOffersMsg.setProtocol("registerOffers"); // TODO:
-																// change?
+			registerOffersMsg.setProtocol("registerOffers"); 
+			
 			try {
 				registerOffersMsg.setContentObject((Serializable) offers);
 				send(registerOffersMsg);
-				System.out.println(getAID().getLocalName().toString()+": Registering offers.");
+				System.out.println(getAID().getLocalName().toString()
+						+ ": \tRegistering offers.");
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -103,12 +109,13 @@ public class TraderAgent extends Agent {
 			ACLMessage registerRequestsMsg = new ACLMessage(ACLMessage.INFORM);
 			registerRequestsMsg.addReceiver(matchmakers[0].getName());
 			registerRequestsMsg.setSender(getAID());
-			registerRequestsMsg.setProtocol("registerRequests"); // TODO:
-																	// change?
+			registerRequestsMsg.setProtocol("registerRequests"); 
+
 			try {
 				registerRequestsMsg.setContentObject((Serializable) requests);
 				send(registerRequestsMsg);
-				System.out.println(getAID().getLocalName().toString()+": Registering requests.");
+				System.out.println(getAID().getLocalName().toString()
+						+ ": \tRegistering requests.");
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -124,7 +131,8 @@ public class TraderAgent extends Agent {
 				try {
 					findOffersMsg.setContentObject(i);
 					send(findOffersMsg);
-					System.out.println(getAID().getLocalName().toString()+": Getting offers for item " + i.getType()
+					System.out.println(getAID().getLocalName().toString()
+							+ ": \tGetting offers for item " + i.getType()
 							+ ".");
 					addBehaviour(new NegotiationBehaviour(i, true));
 				} catch (IOException e) {
@@ -142,8 +150,9 @@ public class TraderAgent extends Agent {
 				try {
 					findRequestsMsg.setContentObject(i);
 					send(findRequestsMsg);
-					System.out.println(getAID().getLocalName().toString()+": Getting requests for item "
-							+ i.getType() + ".");
+					System.out.println(getAID().getLocalName().toString()
+							+ ": \tGetting requests for item " + i.getType()
+							+ ".");
 					addBehaviour(new NegotiationBehaviour(i, false));
 				} catch (IOException e) {
 					e.printStackTrace();
@@ -204,6 +213,7 @@ public class TraderAgent extends Agent {
 									// No other messages can be sent out until
 									// we have a response from this one.
 
+		// all currently running negotiations (may not have been initiated yet)
 		private Set<Negotiation> negotiations = new HashSet<Negotiation>();
 
 		private NegotiationBehaviour(ItemDescriptor item, boolean buying) {
@@ -212,202 +222,249 @@ public class TraderAgent extends Agent {
 			this.id = item.getUid();
 		}
 
-
 		@SuppressWarnings("unchecked")
 		@Override
 		public void action() {
+			// get new message
 			MessageTemplate tmpl = MessageTemplate.MatchReplyWith(id);
 			ACLMessage msg = TraderAgent.this.receive(tmpl);
+
+			// if new message
 			if (msg != null) {
-				if (!done){
-				// if response to getOffers/getRequests
-				if (msg.getProtocol().equals("setOffers")
-						|| msg.getProtocol().equals("setRequests")) {
-					try {
-						List<Entry<String, AID>> partners = (List<Entry<String, AID>>) msg
-								.getContentObject();
+				if (!done) {
+					// if response to getOffers/getRequests
+					if (msg.getProtocol().equals("setOffers")
+							|| msg.getProtocol().equals("setRequests")) {
+						try {
+							List<Entry<String, AID>> partners = (List<Entry<String, AID>>) msg
+									.getContentObject();
 
-						// create negotiation information
-						for (Entry<String, AID> e : partners) {
-							Negotiation n = new Negotiation(e.getKey(),
-									e.getValue(),
+							// create negotiation information
+							for (Entry<String, AID> e : partners) {
+								Negotiation n = new Negotiation(e.getKey(),
+										e.getValue(),
+										buying ? 0.5 * item.getPriceLimit()
+												: 1.5 * item.getPriceLimit(),
+										false);
+								if (getNegotiation(e.getKey()) == null)
+									negotiations.add(n);
+							}
+
+							// start by messaging one of them
+							if (waitFor == null)
+								initiateNextRound();
+
+						} catch (UnreadableException e) {
+							e.printStackTrace();
+						}
+
+						// else if (counter)proposal
+					} else if (msg.getProtocol().equals("proposeDeal")) {
+						boolean isInitial = Boolean.parseBoolean(msg
+								.getEncoding());
+						// get Negotiation object
+						Negotiation n = getNegotiation(msg.getConversationId());
+						if (n == null) {
+							if (!isInitial)
+								throw new IllegalStateException(
+										"Received non-initial proposal from unknown partner:"
+												+ getAID().getLocalName()
+												+ ", partner: "
+												+ msg.getSender()
+														.getLocalName()
+												+ ", item " + item.getType());
+
+							n = new Negotiation(msg.getConversationId(),
+									msg.getSender(),
 									buying ? 0.5 * item.getPriceLimit()
-											: 1.5 * item.getPriceLimit(), false);
-							if (getNegotiation(e.getKey()) == null)
-								negotiations.add(n);
-						}
-
-						// start by messaging one of them
-						if (waitFor == null)
-							initiateNextRound();
-
-					} catch (UnreadableException e) {
-						e.printStackTrace();
-					}
-
-					// else if (counter)proposal
-				} else if (msg.getProtocol().equals("proposeDeal")) {
-					boolean isInitial = Boolean.parseBoolean(msg.getEncoding());
-					// get Negotiation object
-					Negotiation n = getNegotiation(msg.getConversationId());
-					if (n == null) {
-						if (!isInitial)
-							throw new IllegalStateException("Received non-initial proposal from unknown partner:"+getAID().getLocalName()+", partner: "+msg.getSender().getLocalName()+", item "+item.getType());
-						
-						n = new Negotiation(msg.getConversationId(),
-								msg.getSender(),
-								buying ? 0.5 * item.getPriceLimit()
-										: 1.5 * item.getPriceLimit(), true);
-						n.setInitialSent(true);
-						negotiations.add(n);
-					}else{
-						if (buying && isInitial && n.isInitialSent()){
-							return;
-						}
-					}
-
-					if (waitFor == null || waitFor.equals(msg.getSender())) {
-						waitFor = null;
-
-						double offeredPrice = Double.parseDouble(msg
-								.getContent());
-						n.setNeedsResponse(true);
-
-						Negotiation bestN = getBestNegotiation();
-
-						// check if counterproposal possible
-						if (buying) {
-							//double newProposal = bestN.getLastOffer() + NEGOTIATION_STEP;
-							double delta = Math.round(100.0 *Math.abs((bestN.getLastOffer() - item.getPriceLimit()) / NEGOTIATION_STEP_PCT))/100.0;
-
-							double newProposal = bestN.getLastOffer() + delta;
-							if (newProposal < offeredPrice
-									&& newProposal <= item.getPriceLimit() && delta >= NEGOTIATION_STEP) {
-								proposeDeal(bestN.getAid(), bestN.getUid(),
-										newProposal, !bestN.isInitialSent());
-								 System.out.println(getAID().getLocalName().toString()+": Counterproposing to " +
-								 (buying ? "buy" : "sell")
-								 + " item " + item.getType() + " from "
-								 + bestN.getAid().getLocalName() + " for "
-								 + newProposal);
-								bestN.setLastOffer(newProposal);
-								bestN.setNeedsResponse(false);
-								bestN.setInitialSent(true);
-								waitFor = bestN.getAid();
-								return;
-							}
+											: 1.5 * item.getPriceLimit(), true);
+							n.setInitialSent(true);
+							negotiations.add(n);
 						} else {
-							//double newProposal = bestN.getLastOffer() - NEGOTIATION_STEP;
-							double delta = Math.round( 100.0*Math.abs((bestN.getLastOffer() - item.getPriceLimit()) / NEGOTIATION_STEP_PCT)) / 100.0;
-							double newProposal = bestN.getLastOffer() - delta;
-							if (newProposal > offeredPrice
-									&& newProposal >= item.getPriceLimit() && delta >= NEGOTIATION_STEP) {
-								proposeDeal(bestN.getAid(), bestN.getUid(),
-										newProposal, !bestN.isInitialSent());
-								System.out.println(getAID().getLocalName().toString()+": Counterproposing to " +
-										 (buying ? "buy" : "sell")
-										 + " item " + item.getType() + " from "
-										 + bestN.getAid().getLocalName() + " for "
-										 + newProposal);
-								bestN.setLastOffer(newProposal);
-								bestN.setNeedsResponse(false);
-								bestN.setInitialSent(true);
-								waitFor = bestN.getAid();
+							if (buying && isInitial && n.isInitialSent()) {
 								return;
 							}
 						}
 
-						// otherwise, check if acceptable
-						if ((buying && offeredPrice <= item.getPriceLimit())
-								|| (!buying && offeredPrice >= item
-										.getPriceLimit())) {
-							acceptDeal(n.getAid(), n.getUid(), offeredPrice);
-							done = true;
-							for (Negotiation toReject : negotiations) {
-								if (toReject != n && toReject.isNeedsResponse()) {
-									rejectDeal(toReject.getAid(),
-											toReject.getUid());
-									System.out
-											.println(getAID().getLocalName().toString()+": Rejecting proposal from "
-													+ toReject.getAid()
-															.getLocalName()
-													+ " for item "
-													+ item.getType()
-													+ ".");
+						// if we are not waiting for someone else
+						if (waitFor == null || waitFor.equals(msg.getSender())) {
+							waitFor = null;
+
+							double offeredPrice = Double.parseDouble(msg
+									.getContent());
+							n.setNeedsResponse(true);
+
+							Negotiation bestN = getBestNegotiation();
+
+							// check if counterproposal possible
+							if (buying) {
+								// double newProposal = bestN.getLastOffer() +
+								// NEGOTIATION_STEP;
+								double delta = Math.round(100.0 * Math
+										.abs((bestN.getLastOffer() - item
+												.getPriceLimit())
+												/ NEGOTIATION_STEP_PCT)) / 100.0;
+
+								double newProposal = bestN.getLastOffer()
+										+ delta;
+								if (newProposal < offeredPrice
+										&& newProposal <= item.getPriceLimit()
+										&& delta >= NEGOTIATION_STEP) {
+									proposeDeal(bestN.getAid(), bestN.getUid(),
+											newProposal, !bestN.isInitialSent());
+									System.out.println(getAID().getLocalName()
+											.toString()
+											+ ": \tCounterproposing to "
+											+ (buying ? "buy" : "sell")
+											+ " item "
+											+ item.getType()
+											+ " from "
+											+ bestN.getAid().getLocalName()
+											+ " for " + newProposal);
+									bestN.setLastOffer(newProposal);
+									bestN.setNeedsResponse(false);
+									bestN.setInitialSent(true);
+									waitFor = bestN.getAid();
+									return;
+								}
+							} else {
+								// double newProposal = bestN.getLastOffer() -
+								// NEGOTIATION_STEP;
+								double delta = Math.round(100.0 * Math
+										.abs((bestN.getLastOffer() - item
+												.getPriceLimit())
+												/ NEGOTIATION_STEP_PCT)) / 100.0;
+								double newProposal = bestN.getLastOffer()
+										- delta;
+								if (newProposal > offeredPrice
+										&& newProposal >= item.getPriceLimit()
+										&& delta >= NEGOTIATION_STEP) {
+									proposeDeal(bestN.getAid(), bestN.getUid(),
+											newProposal, !bestN.isInitialSent());
+									System.out.println(getAID().getLocalName()
+											.toString()
+											+ ": \tCounterproposing to "
+											+ (buying ? "buy" : "sell")
+											+ " item "
+											+ item.getType()
+											+ " from "
+											+ bestN.getAid().getLocalName()
+											+ " for " + newProposal);
+									bestN.setLastOffer(newProposal);
+									bestN.setNeedsResponse(false);
+									bestN.setInitialSent(true);
+									waitFor = bestN.getAid();
+									return;
 								}
 							}
-							deregister();
-							return;
+
+							// otherwise, check if acceptable
+							if ((buying && offeredPrice <= item.getPriceLimit())
+									|| (!buying && offeredPrice >= item
+											.getPriceLimit())) {
+								acceptDeal(n.getAid(), n.getUid(), offeredPrice);
+								done = true;
+								for (Negotiation toReject : negotiations) {
+									if (toReject != n
+											&& toReject.isNeedsResponse()) {
+										rejectDeal(toReject.getAid(),
+												toReject.getUid());
+										System.out
+												.println(getAID()
+														.getLocalName()
+														.toString()
+														+ ": \tRejecting proposal from "
+														+ toReject.getAid()
+																.getLocalName()
+														+ " for item "
+														+ item.getType() + ".");
+									}
+								}
+								deregister();
+								return;
+							}
+
+							// otherwise reject
+							rejectDeal(n.getAid(), n.getUid());
+							System.out.println(getAID().getLocalName()
+									.toString()
+									+ ": \tRejecting proposal from "
+									+ n.getAid().getLocalName()
+									+ " for item "
+									+ item.getType()
+									+ " because no more offers are possible.");
+							negotiations.remove(n);
 						}
 
-						// otherwise reject
-						rejectDeal(n.getAid(), n.getUid());
-						System.out.println(getAID().getLocalName().toString()+": Rejecting proposal from "
-								+ n.getAid().getLocalName() + " for item "
-								+ item.getType() + " because no more offers are possible.");
-						negotiations.remove(n);
-					}
-				} else if (msg.getProtocol().equals("acceptDeal")) {
-					if (!msg.getSender().equals(waitFor))
-						throw new IllegalStateException(
-								"Got accept from someone I'm not waiting for.");
-					waitFor = null;
-					Negotiation n = getNegotiation(msg.getConversationId());
-					if (n == null)
-						throw new IllegalStateException(
-								"Got accept without offering anything.");
-					for (Negotiation toReject : negotiations) {
-						if (toReject != n && toReject.isNeedsResponse()) {
-							rejectDeal(toReject.getAid(), toReject.getUid());
+					} else if (msg.getProtocol().equals("acceptDeal")) {
+						if (!msg.getSender().equals(waitFor))
+							throw new IllegalStateException(
+									"Got accept from someone I'm not waiting for.");
+						waitFor = null;
+						Negotiation n = getNegotiation(msg.getConversationId());
+						if (n == null)
+							throw new IllegalStateException(
+									"Got accept without offering anything.");
+
+						// send rejections to all other partners
+						for (Negotiation toReject : negotiations) {
+							if (toReject != n && toReject.isNeedsResponse()) {
+								rejectDeal(toReject.getAid(), toReject.getUid());
+							}
 						}
+						double offeredPrice = Double.parseDouble(msg
+								.getContent());
+						System.out.println(getAID().getLocalName().toString()
+								+ ": \tDeal closed! "
+								+ (buying ? " bought item " + item.getType()
+										+ " from " : " sold item to ")
+								+ msg.getSender().getLocalName() + " for "
+								+ offeredPrice + " money units.");
+						done = true;
+						deregister();
+
+					} else if (msg.getProtocol().equals("rejectDeal")) {
+						if (!msg.getSender().equals(waitFor))
+							throw new IllegalStateException(
+									"Got rejection from someone I'm not waiting for.");
+						waitFor = null;
+						Negotiation n = getNegotiation(msg.getConversationId());
+						if (n == null)
+							throw new IllegalStateException(
+									"Got rejection without offering anything.");
+						negotiations.remove(n);
+						initiateNextRound();
 					}
-					double offeredPrice = Double.parseDouble(msg.getContent());
-					System.out
-							.println(getAID().getLocalName().toString()+": Deal closed! "
-									+ (buying ? " bought item "+item.getType() +" from "
-											: " sold item to ")
-									+ msg.getSender().getLocalName() + " for "
-									+ offeredPrice + " money units.");
-					done = true;
-					deregister();
-				} else if (msg.getProtocol().equals("rejectDeal")) {
-					if (!msg.getSender().equals(waitFor))
-						throw new IllegalStateException(
-								"Got rejection from someone I'm not waiting for.");
-					waitFor = null;
-					Negotiation n = getNegotiation(msg.getConversationId());
-					if (n == null)
-						throw new IllegalStateException(
-								"Got rejection without offering anything.");
-					negotiations.remove(n);
-					initiateNextRound();
-				}
-				}else{
+				} else {
 					// this deal has already ended
 					// just reject all incoming requests
-					
-					if (msg.getProtocol().equals("proposeDeal")){
-					
-					rejectDeal(msg.getSender(), msg.getConversationId());
-					System.out.println(getAID().getLocalName().toString()+": Rejecting proposal from "
-							+ msg.getSender().getLocalName() + " for item "
-							+ item.getType() + " because deal has already been made.");
-					}else if (msg.getProtocol().startsWith("set")){
+
+					if (msg.getProtocol().equals("proposeDeal")) {
+
+						rejectDeal(msg.getSender(), msg.getConversationId());
+						System.out.println(getAID().getLocalName().toString()
+								+ ": \tRejecting proposal from "
+								+ msg.getSender().getLocalName() + " for item "
+								+ item.getType()
+								+ " because deal has already been made.");
+					} else if (msg.getProtocol().startsWith("set")) {
 						// ignore
-					}else if (msg.getProtocol().equals("acceptDeal") || msg.getProtocol().equals("rejectDeal")){
-						throw new IllegalStateException("A negotiation which has already ended got an accept or a reject.");
+					} else if (msg.getProtocol().equals("acceptDeal")
+							|| msg.getProtocol().equals("rejectDeal")) {
+						throw new IllegalStateException(
+								"A negotiation which has already ended got an accept or a reject.");
 					}
 				}
-			}else{
+			} else {
 				block();
 			}
 		}
-		
-		private void deregister(){
+
+		private void deregister() {
 			ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
 			msg.setSender(getAID());
 			msg.addReceiver(matchmaker);
-			msg.setProtocol(buying?"deregisterOffers": "deregisterRequests");
+			msg.setProtocol(buying ? "deregisterOffers" : "deregisterRequests");
 			ArrayList<ItemDescriptor> items = new ArrayList<ItemDescriptor>();
 			items.add(item);
 			try {
@@ -429,7 +486,8 @@ public class TraderAgent extends Agent {
 			return result;
 		}
 
-		private void proposeDeal(AID recipient, String uid, double price, boolean initial) {
+		private void proposeDeal(AID recipient, String uid, double price,
+				boolean initial) {
 			ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
 			msg.setReplyWith(uid);
 			msg.setConversationId(id);
@@ -437,7 +495,9 @@ public class TraderAgent extends Agent {
 			msg.setSender(getAID());
 			msg.setContent("" + price);
 			msg.setProtocol("proposeDeal");
-			msg.setEncoding(""+initial); // we are misusing the encoding field for lack of other available fields
+			msg.setEncoding("" + initial); // we are misusing the encoding field
+											// for lack of other available
+											// fields
 			send(msg);
 		}
 
@@ -449,9 +509,9 @@ public class TraderAgent extends Agent {
 			msg.setSender(getAID());
 			msg.setContent("" + price);
 			msg.setProtocol("acceptDeal");
-			System.out.println(getAID().getLocalName().toString()+": Accepting proposal from "
-					+ recipient.getLocalName() + " for item " + item.getType()
-					+ " for " + price);
+			System.out.println(getAID().getLocalName().toString()
+					+ ": \tAccepting proposal from " + recipient.getLocalName()
+					+ " for item " + item.getType() + " for " + price);
 			send(msg);
 		}
 
@@ -465,21 +525,27 @@ public class TraderAgent extends Agent {
 			send(msg);
 		}
 
+		/**
+		 * Makes a new offer to some partner
+		 */
 		private void initiateNextRound() {
 			Negotiation bestN = getBestNegotiation();
 			if (bestN != null) {
 				if (buying) {
-					//double newProposal = bestN.getLastOffer() + NEGOTIATION_STEP;
-					double delta = Math.round( 100.0*Math.abs((bestN.getLastOffer() - item.getPriceLimit()) / NEGOTIATION_STEP_PCT))/100.0;
+					double delta = Math.round(100.0 * Math.abs((bestN
+							.getLastOffer() - item.getPriceLimit())
+							/ NEGOTIATION_STEP_PCT)) / 100.0;
 					double newProposal = bestN.getLastOffer() + delta;
 					if (newProposal <= item.getPriceLimit()) {
 						boolean markAsInitial = !bestN.isInitialSent();
-						proposeDeal(bestN.getAid(), bestN.getUid(), newProposal, markAsInitial);
-						 System.out.println(getAID().getLocalName().toString()+": Proposing to " +
-						 (buying ? "buy" : "sell")
-						 + " item " + item.getType() + " from "
-						 + bestN.getAid().getLocalName() + " for " +
-						 newProposal);
+						proposeDeal(bestN.getAid(), bestN.getUid(),
+								newProposal, markAsInitial);
+						System.out.println(getAID().getLocalName().toString()
+								+ ": \tProposing to "
+								+ (buying ? "buy" : "sell") + " item "
+								+ item.getType() + " from "
+								+ bestN.getAid().getLocalName() + " for "
+								+ newProposal);
 						bestN.setLastOffer(newProposal);
 						bestN.setNeedsResponse(false);
 						bestN.setInitialSent(true);
@@ -487,17 +553,20 @@ public class TraderAgent extends Agent {
 						return;
 					}
 				} else {
-					//double newProposal = bestN.getLastOffer() - NEGOTIATION_STEP;
-					double delta = Math.round(100.0 *Math.abs((bestN.getLastOffer() - item.getPriceLimit()) / NEGOTIATION_STEP_PCT))/100.0;
+					double delta = Math.round(100.0 * Math.abs((bestN
+							.getLastOffer() - item.getPriceLimit())
+							/ NEGOTIATION_STEP_PCT)) / 100.0;
 					double newProposal = bestN.getLastOffer() - delta;
 					if (newProposal >= item.getPriceLimit()) {
 						boolean markAsInitial = !bestN.isInitialSent();
-						proposeDeal(bestN.getAid(), bestN.getUid(), newProposal, markAsInitial);
-						 System.out.println(getAID().getLocalName().toString()+": Proposing to " +
-						 (buying ? "buy" : "sell")
-						 + " item " + item.getType() + " from "
-						 + bestN.getAid().getLocalName() + " for " +
-						 newProposal);
+						proposeDeal(bestN.getAid(), bestN.getUid(),
+								newProposal, markAsInitial);
+						System.out.println(getAID().getLocalName().toString()
+								+ ": \tProposing to "
+								+ (buying ? "buy" : "sell") + " item "
+								+ item.getType() + " from "
+								+ bestN.getAid().getLocalName() + " for "
+								+ newProposal);
 						bestN.setLastOffer(newProposal);
 						bestN.setNeedsResponse(false);
 						bestN.setInitialSent(true);
@@ -508,6 +577,12 @@ public class TraderAgent extends Agent {
 			}
 		}
 
+		/**
+		 * Gets the negotiation object for a specific item uid, if it already
+		 * exists.
+		 * 
+		 * @return
+		 */
 		private Negotiation getBestNegotiation() {
 			if (buying) {
 				double best = Double.MAX_VALUE;
