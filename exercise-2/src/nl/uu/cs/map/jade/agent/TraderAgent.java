@@ -52,35 +52,8 @@ public class TraderAgent extends Agent {
 		}
 
 		// construct offers and requests
-		this.offers = new ArrayList<ItemDescriptor>();
-		String offersString = properties.getProperty("items.offered");
-		if (offersString != null) {
-			String[] offers = offersString.split("\\|");
-			for (String offer : offers) {
-				ItemDescriptor item = new ItemDescriptor();
-				String[] attributes = offer.split(";");
-				for (String attribute : attributes) {
-					String[] keyValue = attribute.split(":");
-					item.setAttribute(keyValue[0].trim(), keyValue[1].trim());
-				}
-				this.offers.add(item);
-			}
-		}
-
-		this.requests = new ArrayList<ItemDescriptor>();
-		String requestsString = properties.getProperty("items.requested");
-		if (requestsString != null) {
-			String[] requests = requestsString.split("\\|");
-			for (String request : requests) {
-				ItemDescriptor item = new ItemDescriptor();
-				String[] attributes = request.split(";");
-				for (String attribute : attributes) {
-					String[] keyValue = attribute.split(":");
-					item.setAttribute(keyValue[0].trim(), keyValue[1].trim());
-				}
-				this.requests.add(item);
-			}
-		}
+		offers = parseItems(properties.getProperty("items.offered"));
+		requests = parseItems(properties.getProperty("items.requested"));
 
 		// get the Matchmaker agent from DF
 		DFAgentDescription mmdesc = new DFAgentDescription();
@@ -92,7 +65,8 @@ public class TraderAgent extends Agent {
 			DFAgentDescription[] matchmakers = DFService.search(this, mmdesc);
 			if (matchmakers.length != 1)
 				throw new IllegalStateException(
-						"There is less or more than one MatchmakerAgent in the system");
+						"Expecting exactly one matchmaker but found "
+								+ matchmakers.length);
 
 			// register offered and requested items
 			ACLMessage registerOffersMsg = new ACLMessage(ACLMessage.INFORM);
@@ -156,6 +130,38 @@ public class TraderAgent extends Agent {
 			e.printStackTrace();
 		}
 
+	}
+
+	private List<ItemDescriptor> parseItems(String itemsString) {
+		List<ItemDescriptor> items = new ArrayList<ItemDescriptor>();
+		if (itemsString != null) {
+			// items are separated by vertical bars
+			String[] splitItems = itemsString.split("\\|");
+			for (String itemString : splitItems) {
+				ItemDescriptor item = new ItemDescriptor();
+				boolean hasPriceLimit = false;
+
+				// attributes are separated by semicolons
+				String[] attributes = itemString.split(";");
+				for (String attribute : attributes) {
+
+					// attribute key and value are separated by colons
+					String[] keyValue = attribute.split(":");
+					if ("priceLimit".equals(keyValue[0])) {
+						// handle the price limit property
+						item.setPriceLimit(Double.parseDouble(keyValue[1]));
+						hasPriceLimit = true;
+					} else
+						item.setAttribute(keyValue[0].trim(),
+								keyValue[1].trim());
+				}
+				if (!hasPriceLimit)
+					throw new IllegalArgumentException(
+							"Missing priceLimit property for item");
+				items.add(item);
+			}
+		}
+		return items;
 	}
 
 	/**
