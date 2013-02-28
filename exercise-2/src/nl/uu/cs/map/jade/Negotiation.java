@@ -7,6 +7,7 @@ public class Negotiation {
 	private AID aid;
 	private double lastOffer;
 	private boolean needsResponse;
+	private boolean initialSent = false;
 
 	public Negotiation(String uid, AID aid, double lastOffer,
 			boolean needsResponse) {
@@ -47,5 +48,13 @@ public class Negotiation {
 
 	public void setNeedsResponse(boolean needsResponse) {
 		this.needsResponse = needsResponse;
+	}
+	
+	public boolean isInitialSent() {
+		return initialSent;
+	}
+
+	public void setInitialSent(boolean initialSent) {
+		this.initialSent = initialSent;
 	}
 }
