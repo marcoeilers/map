@@ -71,10 +71,10 @@ public class MatchmakerAgent extends Agent {
 
 		// only receive registration and deregistration messages
 		private final MessageTemplate registrationTemplate = MessageTemplate
-				.and(MessageTemplate.and(
+				.or(MessageTemplate.or(
 						MessageTemplate.MatchProtocol("registerOffers"),
 						MessageTemplate.MatchProtocol("registerRequests")),
-						MessageTemplate.and(MessageTemplate
+						MessageTemplate.or(MessageTemplate
 								.MatchProtocol("deregisterOffers"),
 								MessageTemplate
 										.MatchProtocol("deregisterRequests")));
@@ -182,7 +182,8 @@ public class MatchmakerAgent extends Agent {
 						throw new RuntimeException(e.getMessage(), e);
 					}
 					send(reply);
-					System.out.println("Matchmaker responded to getOffers request.");
+					System.out
+							.println("Matchmaker responded to getOffers request.");
 				} else if ("getRequests".equals(protocol)) {
 					// reply with a list of traders that request this item
 					reply.setProtocol("setRequests");
@@ -193,7 +194,8 @@ public class MatchmakerAgent extends Agent {
 						throw new RuntimeException(e.getMessage(), e);
 					}
 					send(reply);
-					System.out.println("Matchmaker responded to getRequests request.");
+					System.out
+							.println("Matchmaker responded to getRequests request.");
 
 				}
 			} else
