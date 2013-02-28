@@ -74,17 +74,17 @@ public class ItemDB {
 	 * Returns the buyers for the specified item, returned list may be empty but
 	 * never null.
 	 * 
-	 * @param item
+	 * @param offer
 	 * @return
 	 */
-	public List<Entry<String, AID>> getBuyers(ItemDescriptor item) {
+	public List<Entry<String, AID>> getBuyers(ItemDescriptor offer) {
 		// find possible matching requested items
 		List<ItemDescriptor> matchingItems = new ArrayList<ItemDescriptor>();
-		for (ItemDescriptor matchingItem : requestedItems.keySet())
+		for (ItemDescriptor request : requestedItems.keySet())
 			// find all items that have similar or less properties
 			// buyers would also buy items that exceed their requirements
-			if (item.contains(matchingItem))
-				matchingItems.add(matchingItem);
+			if (offer.contains(request))
+				matchingItems.add(request);
 
 		// get all buyers for these items
 		List<Entry<String, AID>> buyers = new ArrayList<Entry<String, AID>>();
@@ -98,18 +98,18 @@ public class ItemDB {
 	 * Returns the sellers for the specified item, returned list may be empty
 	 * but never null.
 	 * 
-	 * @param item
+	 * @param request
 	 * @return
 	 */
-	public List<Entry<String, AID>> getSellers(ItemDescriptor item) {
+	public List<Entry<String, AID>> getSellers(ItemDescriptor request) {
 		// find possible matching requested items
 		List<ItemDescriptor> matchingItems = new ArrayList<ItemDescriptor>();
-		for (ItemDescriptor matchingItem : offeredItems.keySet())
+		for (ItemDescriptor offer : offeredItems.keySet())
 			// find all items that have similar or less properties
 			// sellers would also sell items that exceed their buyers'
 			// requirements
-			if (matchingItem.contains(item))
-				matchingItems.add(matchingItem);
+			if (offer.contains(request))
+				matchingItems.add(offer);
 
 		// get all sellers for these items
 		List<Entry<String, AID>> sellers = new ArrayList<Entry<String, AID>>();
