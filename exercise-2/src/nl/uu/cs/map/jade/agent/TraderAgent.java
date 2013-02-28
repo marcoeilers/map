@@ -67,9 +67,6 @@ public class TraderAgent extends Agent {
 			}
 		}
 
-		for (ItemDescriptor i : offers)
-			System.out.println(i);
-
 		this.requests = new ArrayList<ItemDescriptor>();
 		String requestsString = properties.getProperty("items.requested");
 		if (requestsString != null) {
@@ -84,9 +81,6 @@ public class TraderAgent extends Agent {
 				this.requests.add(item);
 			}
 		}
-
-		for (ItemDescriptor i : requests)
-			System.out.println(i);
 
 		// get the Matchmaker agent from DF
 		DFAgentDescription mmdesc = new DFAgentDescription();
