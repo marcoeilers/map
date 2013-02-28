@@ -45,30 +45,70 @@ public class ItemDescriptor implements Serializable {
 		this.priceLimit = limit;
 	}
 
+	/**
+	 * Returns an attribute of this item, if available
+	 * 
+	 * @param key
+	 *            the name of the attribute
+	 * @return
+	 */
 	public String getAttribute(String key) {
 		return attributes.get(key);
 	}
 
+	/**
+	 * Sets an attribute of this item.
+	 * 
+	 * @param key
+	 * @param value
+	 */
 	public void setAttribute(String key, String value) {
 		attributes.put(key, value);
 	}
 
+	/**
+	 * Checks if this item has a specific attribute
+	 * 
+	 * @param key
+	 * @return
+	 */
 	public boolean hasAttribute(String key) {
 		return attributes.containsKey(key);
 	}
 
+	/**
+	 * Returns a set consisting all attributes of this item as Entries.
+	 * 
+	 * @return
+	 */
 	public Set<Entry<String, String>> getAttributes() {
 		return attributes.entrySet();
 	}
 
+	/**
+	 * Sets the maximal/minimal price for this item.
+	 * 
+	 * @param limit
+	 */
 	public void setPriceLimit(double limit) {
 		this.priceLimit = limit;
 	}
 
+	/**
+	 * Gets the maximal/minimal price for this item, respectively, if this item
+	 * is requested/offered.
+	 * 
+	 * @return
+	 */
 	public double getPriceLimit() {
 		return priceLimit;
 	}
 
+	/**
+	 * Gets a string containing a unique identifier of this item descriptor.
+	 * 
+	 * @return
+	 */
 	public String getUid() {
 		return uid;
 	}
@@ -91,9 +131,17 @@ public class ItemDescriptor implements Serializable {
 		}
 		return contains;
 	}
-	
-	public String getType(){
-		return attributes.get("type");
+
+	/**
+	 * Returns the contents of the "type" attribute. Can be used as a shorthand
+	 * identifier for this item. Returns an empty string if the attribute does
+	 * not exist.
+	 * 
+	 * @return
+	 */
+	public String getType() {
+		String result = attributes.get("type");
+		return result == null ? "" : result;
 	}
 
 	@Override
