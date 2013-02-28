@@ -103,6 +103,7 @@ public class TraderAgent extends Agent {
 			try {
 				registerOffersMsg.setContentObject((Serializable) offers);
 				send(registerOffersMsg);
+				System.out.println("Registering offers: "+getAID());
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -115,6 +116,7 @@ public class TraderAgent extends Agent {
 			try {
 				registerRequestsMsg.setContentObject((Serializable) requests);
 				send(registerRequestsMsg);
+				System.out.println("Registering requests: "+getAID());
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -130,6 +132,7 @@ public class TraderAgent extends Agent {
 				try {
 					findOffersMsg.setContentObject(i);
 					send(findOffersMsg);
+					System.out.println("Getting offers for item "+i+": "+getAID());
 					addBehaviour(new NegotiationBehaviour(i, false));
 				} catch (IOException e) {
 					e.printStackTrace();
@@ -146,6 +149,7 @@ public class TraderAgent extends Agent {
 				try {
 					findRequestsMsg.setContentObject(i);
 					send(findRequestsMsg);
+					System.out.println("Getting requests for item "+i+": "+getAID());
 					addBehaviour(new NegotiationBehaviour(i, true));
 				} catch (IOException e) {
 					e.printStackTrace();
@@ -238,7 +242,7 @@ public class TraderAgent extends Agent {
 
 					Negotiation bestN = getBestNegotiation();
 
-					// TODO check if counterproposal possible
+					// check if counterproposal possible
 					if (buying) {
 						double newProposal = bestN.getLastOffer() + 1.0;
 						if (newProposal < offeredPrice
@@ -335,6 +339,7 @@ public class TraderAgent extends Agent {
 			msg.setContent("" + price);
 			msg.setProtocol("proposeDeal");
 			send(msg);
+			System.out.println("Proposing to "+(buying?"buy":"sell")+" item "+item+": "+getAID()+". Partner: "+recipient+". Price: "+price);
 		}
 
 		private void acceptDeal(AID recipient, String uid, double price) {
@@ -345,6 +350,7 @@ public class TraderAgent extends Agent {
 			msg.setSender(getAID());
 			msg.setContent("" + price);
 			msg.setProtocol("acceptDeal");
+			System.out.println("Accepting proposal from "+recipient+" for item "+item+": "+getAID()+". Price: "+price);
 			send(msg);
 		}
 
@@ -355,6 +361,7 @@ public class TraderAgent extends Agent {
 			msg.addReceiver(recipient);
 			msg.setSender(getAID());
 			msg.setProtocol("rejectDeal");
+			System.out.println("Rejecting proposal from "+recipient+" for item "+item+": "+getAID());
 			send(msg);
 		}
 
