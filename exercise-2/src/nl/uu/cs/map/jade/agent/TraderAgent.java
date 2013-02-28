@@ -71,10 +71,8 @@ public class TraderAgent extends Agent {
 		try {
 			Thread.sleep(Integer.parseInt((String) args[1]));
 		} catch (NumberFormatException e1) {
-			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		} catch (InterruptedException e1) {
-			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
 
@@ -97,8 +95,8 @@ public class TraderAgent extends Agent {
 			ACLMessage registerOffersMsg = new ACLMessage(ACLMessage.INFORM);
 			registerOffersMsg.addReceiver(matchmakers[0].getName());
 			registerOffersMsg.setSender(getAID());
-			registerOffersMsg.setProtocol("registerOffers"); // TODO:
-																// change?
+			registerOffersMsg.setProtocol("registerOffers"); 
+			
 			try {
 				registerOffersMsg.setContentObject((Serializable) offers);
 				send(registerOffersMsg);
@@ -111,8 +109,8 @@ public class TraderAgent extends Agent {
 			ACLMessage registerRequestsMsg = new ACLMessage(ACLMessage.INFORM);
 			registerRequestsMsg.addReceiver(matchmakers[0].getName());
 			registerRequestsMsg.setSender(getAID());
-			registerRequestsMsg.setProtocol("registerRequests"); // TODO:
-																	// change?
+			registerRequestsMsg.setProtocol("registerRequests"); 
+
 			try {
 				registerRequestsMsg.setContentObject((Serializable) requests);
 				send(registerRequestsMsg);
