@@ -375,12 +375,7 @@ public class TraderAgent extends Agent {
 					initiateNextRound();
 				}
 			}else{
-				// FIXME blockingReceive causes stuff to block, so... I did this
-				try {
-					Thread.sleep(50);
-				} catch (InterruptedException e) {
-					//whatever
-				}
+				block();
 			}
 		}
 
