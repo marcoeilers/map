@@ -1,0 +1,11 @@
+/* Jason Project */
+
+MAS exercise3 {
+
+    infrastructure: Centralised
+
+    environment: ElectronicMarketEnv
+
+    // agents: 
+}
+
