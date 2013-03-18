@@ -3,3 +3,11 @@
 bin/
 APDescription.txt
 MTPs-Main-Container.txt
+
+*.class
+
+# Latex byproducts #
+report/assignment-2.pdf
+report/assignment-2.log
+report/assignment-2.aux
+report/assignment-2.fdb_latexmk
