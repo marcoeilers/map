@@ -6,6 +6,7 @@ MAS exercise3 {
 
     environment: ElectronicMarketEnv
 
-    // agents: 
+    agents: trader agentClass TraderAgClass;
+
 }
 
