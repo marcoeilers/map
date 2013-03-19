@@ -77,17 +77,16 @@ bestNegotiation(Product,[First|Rest],BestSeller,BestPrice,Best) :-
  ?stepFactor(StepFactor);
  +lastPrice(Product,Buyer,OldPrice - ((OldPrice-MinPrice)*StepFactor));
  -lastPrice(Product,Buyer,OldPrice);
- .send(Buyer,achieve,reactToBuyOffer(Product,Me,OldPrice - ((OldPrice-MinPrice)*StepFactor),Initial)).
+ .send(Buyer,achieve,reactToBuyOffer(Product,Me,OldPrice - ((OldPrice-MinPrice)*StepFactor),false)).
  
 +!reactToSaleOffer(Product,Buyer,Price,Initial) : not lastPrice(Product,Buyer,LastPrice) <-
  ?offers(Product,MinPrice);
  +lastPrice(Product,Buyer,2 * MinPrice);
+ !addSale(Product,Buyer);
  !reactToSaleOffer(Product,Buyer,Price,Initial). // FIXME Initial is not actually false 
 
 +!reactToSaleOffer(Product,Buyer,Price,Initial) : lastPrice(Product,Buyer,LastPrice)
-                                              & (waitingFor(Product,Buyer) 
-											    |waitingFor(Product,null) 
-												|not waitingFor(Product,Anyone))<-
+                                              <-
  !respondToSaleOffer(Product,Buyer,Price).
  
 
@@ -121,6 +120,17 @@ bestNegotiation(Product,[First|Rest],BestSeller,BestPrice,Best) :-
 										  & LastPrice - ((LastPrice - MinPrice)*StepFactor) > Price) 
 										  & Price > MinPrice <-
  .print("sale reject",Price," ",LastPrice," ",MinPrice," ",LastPrice - ((LastPrice - MinPrice)*StepFactor)).
+ 
++!respondToSaleOffer(Product,Buyer,Price) : findBestSale(Product,Best)
+                                          & lastPrice(Product,Best,LastPrice)
+										  & offers(Product,MinPrice) <- 
+ .print("sale error ",Price," ",LastPrice," ",MinPrice," ",LastPrice - ((LastPrice - MinPrice)*StepFactor)).
+ 
++!addSale(Product,Buyer) : not sales(Product,Anything) <-
+ +sales(Product,[Buyer]).
++!addSale(Product,Buyer) : sales(Product,OldSales) <-
+ -sales(Product,OldSales);
+ +sales(Product,[Buyer|OldSales]).
  
 /* Plans for Buyer */
 
@@ -158,17 +168,16 @@ bestNegotiation(Product,[First|Rest],BestSeller,BestPrice,Best) :-
  ?stepFactor(StepFactor);
  +lastPrice(Product,Seller,OldPrice + ((MaxPrice-OldPrice)*StepFactor));
  -lastPrice(Product,Seller,OldPrice);
- .send(Seller,achieve,reactToSaleOffer(Product,Me,OldPrice + ((MaxPrice-OldPrice)*StepFactor),Initial)).
+ .send(Seller,achieve,reactToSaleOffer(Product,Me,OldPrice + ((MaxPrice-OldPrice)*StepFactor),false)).
  
 +!reactToBuyOffer(Product,Seller,Price,true) : not lastPrice(Product,Seller,LastPrice) <-
  ?requests(Product,MaxPrice);
  +lastPrice(Product,Seller,MaxPrice / 2.0);
+ !addNegotiation(Product,Seller);
  !reactToBuyOffer(Product,Seller,Price,false). // FIXME Initial is not actually false 
  
 +!reactToBuyOffer(Product,Seller,Price,false) : lastPrice(Product,Seller,LastPrice)
-                                              & (waitingFor(Product,Seller) 
-											    |waitingFor(Product,null) 
-												|not waitingFor(Product,Anyone))<-
+                                              <-
  !respondToBuyOffer(Product,Seller,Price).
  
 +!reactToBuyOffer(Product,Seller,Price,true) :  initialSent(Product,Seller) <-// FIXME Whatever
@@ -203,3 +212,14 @@ bestNegotiation(Product,[First|Rest],BestSeller,BestPrice,Best) :-
 										  & LastPrice + ((MaxPrice-LastPrice)*StepFactor) < Price)  
 										  & Price > MaxPrice <-
  .print("buy reject",Price," ",LastPrice," ",MaxPrice," ",LastPrice + ((MaxPrice-LastPrice)*StepFactor)).
+ 
++!respondToBuyOffer(Product,Seller,Price) : findBestNegotiation(Product,Best)
+                                          & lastPrice(Product,Best,LastPrice)
+										  & requests(Product,MaxPrice) <-
+ .print("error: ",Price," ",LastPrice," ",MaxPrice," ",LastPrice + ((MaxPrice-LastPrice)*StepFactor)).
+ 
++!addNegotiation(Product,Seller) : not negotiations(Product,Anything) <-
+ +negotiations(Product,[Seller]).
++!addNegotiation(Product,Seller) : negotiations(Product,OldNegotiations) <-
+ -negotiations(Product,OldNegotiations);
+ +negotiations(Product,[Seller|OldNegotiations]).
