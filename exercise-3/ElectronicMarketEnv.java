@@ -41,16 +41,16 @@ public class ElectronicMarketEnv extends Environment {
 			throw new IllegalArgumentException("Expecting the second parameter to be an agent name instead of " + trader.getClass().getName() + ".");
 		
 		if("envAddOffer".equals(functor)) {
-			itemDB.addOffer(ItemDescriptor.fromTerm(attributes), agName);
+			itemDB.addOffer(ItemDescriptor.fromTerm(attributes), trader.toString());
 			return true;
 		} else if("envRemoveOffer".equals(functor)) {
-			itemDB.removeOffer(ItemDescriptor.fromTerm(attributes), agName);
+			itemDB.removeOffer(ItemDescriptor.fromTerm(attributes), trader.toString());
 			return true;
 		} else if("envAddRequest".equals(functor)) {
-			itemDB.addRequest(ItemDescriptor.fromTerm(attributes), agName);
+			itemDB.addRequest(ItemDescriptor.fromTerm(attributes), trader.toString());
 			return true;
 		} else if("envRemoveRequest".equals(functor)) {
-			itemDB.removeRequest(ItemDescriptor.fromTerm(attributes), agName);
+			itemDB.removeRequest(ItemDescriptor.fromTerm(attributes), trader.toString());
 			return true;
 		} else if("envGetBuyers".equals(functor)) {
 			List<String> buyers = itemDB.getBuyers(ItemDescriptor.fromTerm(attributes));
