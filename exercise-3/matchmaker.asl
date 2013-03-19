@@ -6,6 +6,12 @@
 
 /* Plans */
 
++!registerOffer(Product,Trader) : true <-
+ envAddOffer(Product,Trader).
+
++!registerRequest(Product,Trader) : true <-
+ envAddRequest(Product,Trader).
+
 +!getBuyers(Product,Trader) : true <-
  .print(Trader, " wants to sell ", Product);
   envGetBuyers(Product,Trader).
