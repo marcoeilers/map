@@ -73,20 +73,17 @@ public class ItemDB {
 	 * @param offer
 	 * @return
 	 */
-	public List<Entry<String, String>> getBuyers(ItemDescriptor offer) {
+	public List<String> getBuyers(ItemDescriptor offer) {
 		// find possible matching requested items
 		List<ItemDescriptor> matchingItems = new ArrayList<ItemDescriptor>();
 		for (ItemDescriptor request : requestedItems.keySet())
-			// find all items that have similar or less properties
-			// buyers would also buy items that exceed their requirements
-			if (offer.contains(request))
+			if (offer.equals(request))
 				matchingItems.add(request);
 
 		// get all buyers for these items
-		List<Entry<String, String>> buyers = new ArrayList<Entry<String, String>>();
+		List<String> buyers = new ArrayList<String>();
 		for (ItemDescriptor matchingItem : matchingItems)
-			buyers.add(new SimpleEntry<String, String>(matchingItem.getUid(),
-					requestedItems.get(matchingItem)));
+			buyers.add(requestedItems.get(matchingItem));
 		return buyers;
 	}
 
@@ -97,21 +94,17 @@ public class ItemDB {
 	 * @param request
 	 * @return
 	 */
-	public List<Entry<String, String>> getSellers(ItemDescriptor request) {
+	public List<String> getSellers(ItemDescriptor request) {
 		// find possible matching requested items
 		List<ItemDescriptor> matchingItems = new ArrayList<ItemDescriptor>();
 		for (ItemDescriptor offer : offeredItems.keySet())
-			// find all items that have similar or less properties
-			// sellers would also sell items that exceed their buyers'
-			// requirements
-			if (offer.contains(request))
+			if (offer.equals(request))
 				matchingItems.add(offer);
 
 		// get all sellers for these items
-		List<Entry<String, String>> sellers = new ArrayList<Entry<String, String>>();
+		List<String> sellers = new ArrayList<String>();
 		for (ItemDescriptor matchingItem : matchingItems)
-			sellers.add(new SimpleEntry<String, String>(matchingItem.getUid(),
-					offeredItems.get(matchingItem)));
+			sellers.add(offeredItems.get(matchingItem));
 		return sellers;
 	}
 
