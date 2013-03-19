@@ -84,17 +84,19 @@ public class ItemDescriptor implements Serializable {
 		
 		ItemDescriptor id = (ItemDescriptor) o;
 		
-		if(Double.compare(id.getPriceLimit(), priceLimit) != 0)
-			return false;
-		
 		if(id.getAttributes().size() != attributes.size())
 			return false;
 		
-		for(String attribute : id.getAttributes())
-			if(!hasAttribute(attribute))
+		for(int i = 0; i < id.getAttributes().size(); ++i)
+			if(!id.getAttributes().get(i).equals(attributes.get(i)))
 				return false;
 			
 		return true;
+	}
+	
+	@Override
+	public int hashCode() {
+		return toString().split("@")[0].hashCode();
 	}
 	
 	@Override
