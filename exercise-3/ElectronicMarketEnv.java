@@ -6,7 +6,7 @@ import java.util.logging.*;
 
 public class ElectronicMarketEnv extends Environment {
 
-    private Logger logger = Logger.getLogger("exercise-3.mas2j."+ElectronicMarketEnv.class.getName());
+    private Logger logger = Logger.getLogger("exercise-3.mas2j." + ElectronicMarketEnv.class.getName());
 	
 	private final ItemDB itemDB;
 	
@@ -37,8 +37,8 @@ public class ElectronicMarketEnv extends Environment {
 			return true;
 		}
 		
-		// we did not handle the event
-		logger.info("executing: "+action+", but not implemented!");
+		// we did not handle the action
+		logger.info("Action '" + action + "' is not implemented in the environment.");
         return false;
     }
 
