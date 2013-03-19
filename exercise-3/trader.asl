@@ -141,6 +141,7 @@ bestNegotiation(Product,[First|Rest],BestSeller,BestPrice,Best) :-
 
 +!setSellers(Product,Sellers) : empty(Sellers) <- .print("No Sellers for now.").
 +!setSellers(Product,Sellers) : not empty(Sellers) <- 
+ .print("Got sellers.");
  +negotiations(Product,Sellers);
  !setupNegotiations(Product,Sellers).
 
