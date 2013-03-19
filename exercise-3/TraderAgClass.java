@@ -33,9 +33,8 @@ public class TraderAgClass extends Agent {
 		
 		// add initial sell beliefs from offers
 		for(ItemDescriptor offer : offers) {
-			Literal sellBelief = ASSyntax.createLiteral("sellBelief", new NumberTermImpl(offer.getPriceLimit()));
-			for(Entry<String, String> attribute : offer.getAttributes())
-				sellBelief.addTerm(new StringTermImpl(attribute.getValue()));
+			Literal sellBelief = ASSyntax.createLiteral("sell_belief");
+			sellBelief.addTerms(offer.toTerms());
 			try {
 				addBel(sellBelief);
 			} catch(RevisionFailedException e) {
@@ -45,9 +44,8 @@ public class TraderAgClass extends Agent {
 		
 		// add initial buy beliefs from requests
 		for(ItemDescriptor request : requests) {
-			Literal buyBelief = ASSyntax.createLiteral("buyBelief", new NumberTermImpl(request.getPriceLimit()));
-			for(Entry<String, String> attribute : request.getAttributes())
-				buyBelief.addTerm(new StringTermImpl(attribute.getValue()));
+			Literal buyBelief = ASSyntax.createLiteral("buy_belief");
+			buyBelief.addTerms(request.toTerms());
 			try {
 				addBel(buyBelief);
 			} catch(RevisionFailedException e) {
