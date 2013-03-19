@@ -14,7 +14,7 @@
 
 +!getBuyers(Product,Trader) : true <-
  .print(Trader, " wants to sell ", Product);
-  envGetBuyers(Product,Trader).
+ envGetBuyers(Product,Trader).
 
 +setBuyers(Buyers,Product,Trader) : true <-
  .print("Buyers ", Buyers, " want to buy ", Product, " from ", Trader);
