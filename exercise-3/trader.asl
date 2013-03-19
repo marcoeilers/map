@@ -3,10 +3,23 @@
 /* Initial beliefs and rules */
 
 /* Initial goals */
+offers(rabbit,20).
 
-!start.
+tralala(A,70) :- offers(A,20).
+
 
 /* Plans */
 
-+!start : true <- .print("hello world.").
++offers(Product,Price) : true <- .my_name(Me);
+                                 .send(matchmaker,achieve,getBuyers(A,Me)).
++!setBuyers(Product,[]) : true <-   ?tralala(A,B);
+									.print(B).
+
++!setBuyers(Product,[First|Rest]) : true <- 
+								  ?offers(Product,Price);
+                                  +lastPrice(Product,First,Price * 2);
+                                  !setBuyers(Product,Rest).
+
+
+
 
