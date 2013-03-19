@@ -33,24 +33,16 @@ public class TraderAgClass extends Agent {
 		
 		// add initial sell beliefs from offers
 		for(ItemDescriptor offer : offers) {
-			Literal sellBelief = ASSyntax.createLiteral("sellBelief");
-			sellBelief.addTerms(offer.toTerm());
-			try {
-				addBel(sellBelief);
-			} catch(RevisionFailedException e) {
-				throw new RuntimeException(e.getMessage(), e);
-			}
+			Literal l = ASSyntax.createLiteral("offers");
+			l.addTerms(offer.toTerm(), new NumberTermImpl(offer.getPriceLimit()));
+			addInitialBel(l);
 		}
 		
 		// add initial buy beliefs from requests
 		for(ItemDescriptor request : requests) {
-			Literal buyBelief = ASSyntax.createLiteral("buyBelief");
-			buyBelief.addTerms(request.toTerm());
-			try {
-				addBel(buyBelief);
-			} catch(RevisionFailedException e) {
-				throw new RuntimeException(e.getMessage(), e);
-			}
+			Literal l = ASSyntax.createLiteral("requests");
+			l.addTerms(request.toTerm(), new NumberTermImpl(request.getPriceLimit()));
+			addInitialBel(l);
 		}
 		
 		logger.info("Agent '" + agentName + "' offers " + offers + " and requests " + requests + ".");
