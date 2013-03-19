@@ -4,6 +4,7 @@ import jason.asSyntax.*;
 import jason.environment.*;
 import java.util.logging.*;
 import java.util.*;
+import java.util.Map.*;
 
 public class ElectronicMarketEnv extends Environment {
 
@@ -25,21 +26,53 @@ public class ElectronicMarketEnv extends Environment {
     @Override
     public boolean executeAction(String agName, Structure action) {
 		String functor = action.getFunctor();
-		if("env_add_offer".equals(functor)) {
-			itemDB.addOffer(ItemDescriptor.fromTerms(action.getTerms()), agName);
+		
+		// item is a parameter and maybe an agent identifier
+		int numTerms = action.getTerms().size();
+		if(numTerms < 1 || numTerms > 2)
+			throw new IllegalArgumentException("Expecting exactly one or two parameters instead of " + numTerms + ".");
+		
+		Term attributes = action.getTerm(0);
+		if(!(attributes instanceof ListTerm))
+			throw new IllegalArgumentException("Expecting the first parameter to be a list instead of " + attributes.getClass().getName() + ".");
+		
+		Term trader = action.getTerm(1);
+		if(numTerms == 2 && !(trader instanceof VarTerm))
+			throw new IllegalArgumentException("Expecting the second parameter to be an agent name instead of " + trader.getClass().getName() + ".");
+		
+		if("envAddOffer".equals(functor)) {
+			itemDB.addOffer(ItemDescriptor.fromTerm(attributes), agName);
 			return true;
-		} else if("env_remove_offer".equals(functor)) {
-			itemDB.removeOffer(ItemDescriptor.fromTerms(action.getTerms()), agName);
+		} else if("envRemoveOffer".equals(functor)) {
+			itemDB.removeOffer(ItemDescriptor.fromTerm(attributes), agName);
 			return true;
-		} else if("env_add_request".equals(functor)) {
-			itemDB.addRequest(ItemDescriptor.fromTerms(action.getTerms()), agName);
+		} else if("envAddRequest".equals(functor)) {
+			itemDB.addRequest(ItemDescriptor.fromTerm(attributes), agName);
 			return true;
-		} else if("env_remove_request".equals(functor)) {
-			itemDB.removeRequest(ItemDescriptor.fromTerms(action.getTerms()), agName);
+		} else if("envRemoveRequest".equals(functor)) {
+			itemDB.removeRequest(ItemDescriptor.fromTerm(attributes), agName);
 			return true;
-		} else if("env_get_buyers".equals(functor)) {
+		} else if("envGetBuyers".equals(functor)) {
+			List<String> buyers = itemDB.getBuyers(ItemDescriptor.fromTerm(attributes));
+			Literal setBuyers = ASSyntax.createLiteral("setBuyers");
+			ListTerm buyerTerms = new ListTermImpl();
+			for(String buyer : buyers)
+				buyerTerms.add(new StringTermImpl(buyer));
+			setBuyers.addTerm(buyerTerms);
+			setBuyers.addTerm(attributes);
+			setBuyers.addTerm(trader);
+			addPercept(agName, setBuyers);
 			return true;
-		} else if("env_get_sellers".equals(functor)) {
+		} else if("envGetSellers".equals(functor)) {
+			List<String> sellers = itemDB.getSellers(ItemDescriptor.fromTerm(attributes));
+			Literal setSellers = ASSyntax.createLiteral("setSellers");
+			ListTerm sellerTerms = new ListTermImpl();
+			for(String seller : sellers)
+				sellerTerms.add(new StringTermImpl(seller));
+			setSellers.addTerm(sellerTerms);
+			setSellers.addTerm(attributes);
+			setSellers.addTerm(trader);
+			addPercept(agName, setSellers);
 			return true;
 		}
 		
