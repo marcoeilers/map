@@ -33,8 +33,8 @@ public class TraderAgClass extends Agent {
 		
 		// add initial sell beliefs from offers
 		for(ItemDescriptor offer : offers) {
-			Literal sellBelief = ASSyntax.createLiteral("sell_belief");
-			sellBelief.addTerms(offer.toTerms());
+			Literal sellBelief = ASSyntax.createLiteral("sellBelief");
+			sellBelief.addTerms(offer.toTerm());
 			try {
 				addBel(sellBelief);
 			} catch(RevisionFailedException e) {
@@ -44,8 +44,8 @@ public class TraderAgClass extends Agent {
 		
 		// add initial buy beliefs from requests
 		for(ItemDescriptor request : requests) {
-			Literal buyBelief = ASSyntax.createLiteral("buy_belief");
-			buyBelief.addTerms(request.toTerms());
+			Literal buyBelief = ASSyntax.createLiteral("buyBelief");
+			buyBelief.addTerms(request.toTerm());
 			try {
 				addBel(buyBelief);
 			} catch(RevisionFailedException e) {
@@ -53,7 +53,7 @@ public class TraderAgClass extends Agent {
 			}
 		}
 		
-		logger.info("Agent '" + agentName + "' offers " + offers.size() + " items and requests " + requests.size() + " items.");
+		logger.info("Agent '" + agentName + "' offers " + offers + " and requests " + requests + ".");
 	}
 	
 	private List<ItemDescriptor> parseItems(String itemsString) {
@@ -63,25 +63,20 @@ public class TraderAgClass extends Agent {
 			String[] splitItems = itemsString.split("\\|");
 			for (String itemString : splitItems) {
 				ItemDescriptor item = new ItemDescriptor();
-				boolean hasPriceLimit = false;
 
 				// attributes are separated by semicolons
 				String[] attributes = itemString.split(";");
-				for (String attribute : attributes) {
-
-					// attribute key and value are separated by colons
-					String[] keyValue = attribute.split(":");
-					if ("priceLimit".equals(keyValue[0])) {
-						// handle the price limit property
-						item.setPriceLimit(Double.parseDouble(keyValue[1]));
-						hasPriceLimit = true;
-					} else
-						item.setAttribute(keyValue[0].trim(),
-								keyValue[1].trim());
+				
+				// first one has to be the price limit
+				try {
+					item.setPriceLimit(Double.parseDouble(attributes[0]));
+				} catch(NumberFormatException e) {
+					throw new IllegalArgumentException("The first attribute has to be the price limit.");
 				}
-				if (!hasPriceLimit)
-					throw new IllegalArgumentException(
-							"Missing priceLimit property for item");
+				
+				// add the rest of the attributes
+				for (int i = 1; i < attributes.length; ++i)
+					item.addAttribute(attributes[i]);
 				items.add(item);
 			}
 		}
