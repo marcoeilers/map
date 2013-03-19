@@ -4,7 +4,7 @@
 
 /* Initial goals */
 
-buyers(rabbit,[t2]).
+buyers(rabbit,[buyer]).
 
 /* Plans */
 +!getBuyers(Product,Trader) : true <- ?buyers(Product,P);
