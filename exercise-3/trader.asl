@@ -8,5 +8,5 @@
 
 /* Plans */
 
-+!start : true <- .print("hello world.").
++!start : true <- .print("hello world."); env_add_offer("123", 35, "color", "red").
 
