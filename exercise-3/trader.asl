@@ -57,13 +57,22 @@ bestNegotiation(Product,[First|Rest],BestSeller,BestPrice,Best) :-
  +lastPrice(Product,First,Price * 2);
  !setupSales(Product,Rest).				
 
-+!makeSaleOffer(Product,Buyer,Initial) : true <-
++!makeSaleOffer(Product,Buyer,true) : true <-
  .my_name(Me);
  ?lastPrice(Product,Buyer,OldPrice);
  ?offers(Product,MinPrice);
  +waitingFor(Product,Buyer);
  +initialSent(Product,Buyer);
- .send(Buyer,achieve,reactToBuyOffer(Product,Me,MinPrice,Initial)).
+ .send(Buyer,achieve,reactToBuyOffer(Product,Me,OldPrice,Initial)).
+ 
++!makeSaleOffer(Product,Buyer,false) : true <-
+ .my_name(Me);
+ ?lastPrice(Product,Buyer,OldPrice);
+ ?offers(Product,MinPrice);
+ +waitingFor(Product,Buyer);
+ +initialSent(Product,Buyer);
+ +lastPrice(Product,Buyer,OldPrice - ((OldPrice-MinPrice)*0.2));
+ .send(Buyer,achieve,reactToBuyOffer(Product,Me,OldPrice - ((OldPrice-MinPrice)*0.2),Initial)).
  
 +!reactToSaleOffer(Product,Buyer,Price,true) : not lastPrice(Product,Buyer,LastPrice) <-
  ?offers(Product,MinPrice);
@@ -75,6 +84,8 @@ bestNegotiation(Product,[First|Rest],BestSeller,BestPrice,Best) :-
 											    |waitingFor(Product,null) 
 												|not waitingFor(Product,Anyone))<-
  !respondToSaleOffer(Product,Buyer,Price).
+ 
+
 
 +!respondToSaleOffer(Product,Buyer,Price) : findBestSale(Product,Best)
                                           & lastPrice(Product,Best,LastPrice)
@@ -118,12 +129,22 @@ bestNegotiation(Product,[First|Rest],BestSeller,BestPrice,Best) :-
  +lastPrice(Product,First,Price / 2);
  !setupNegotiations(Product,Rest).				
 
-+!makeBuyOffer(Product,Seller,Initial) : true <-
++!makeBuyOffer(Product,Seller,true) : true <-
  .my_name(Me);
  ?lastPrice(Product,Seller,OldPrice);
  ?requests(Product,MaxPrice);
+ +initialSent(Product,Seller);
  +waitingFor(Product,Seller);
- .send(Seller,achieve,reactToSaleOffer(Product,Me,MaxPrice,Initial)).
+ .send(Seller,achieve,reactToSaleOffer(Product,Me,OldPrice,Initial)).
+ 
++!makeBuyOffer(Product,Seller,false) : true <-
+ .my_name(Me);
+ ?lastPrice(Product,Seller,OldPrice);
+ ?requests(Product,MaxPrice);
+ +initialSent(Product,Seller);
+ +waitingFor(Product,Seller);
+ +lastPrice(Product,Seller,OldPrice + ((MaxPrice-OldPrice)*0.2));
+ .send(Seller,achieve,reactToSaleOffer(Product,Me,OldPrice + ((MaxPrice-OldPrice)*0.2),Initial)).
  
 +!reactToBuyOffer(Product,Seller,Price,true) : not lastPrice(Product,Seller,LastPrice) <-
  ?requests(Product,MaxPrice);
@@ -135,6 +156,9 @@ bestNegotiation(Product,[First|Rest],BestSeller,BestPrice,Best) :-
 											    |waitingFor(Product,null) 
 												|not waitingFor(Product,Anyone))<-
  !respondToBuyOffer(Product,Seller,Price).
+ 
++!reactToBuyOffer(Product,Seller,Price,true) :  initialSent(Product,Seller) <-// FIXME Whatever
+ .print("One message skipped").
 
 +!respondToBuyOffer(Product,Seller,Price) : findBestNegotiation(Product,Best)
                                           & lastPrice(Product,Best,LastPrice)
@@ -162,7 +186,9 @@ bestNegotiation(Product,[First|Rest],BestSeller,BestPrice,Best) :-
 +!respondToBuyOffer(Product,Seller,Price) : findBestNegotiation(Product,Best)
                                           & lastPrice(Product,Best,LastPrice)
 										  & requests(Product,MaxPrice) <-
- .print(Best);
+ .print(Price);
  .print(LastPrice);
- .print(MaxPrice).
-
+ .print(MaxPrice);
+ .print(MaxPrice-LastPrice);
+ .print((MaxPrice-LastPrice) * 0.2);
+ .print(LastPrice + ((MaxPrice-LastPrice)*0.2)).
