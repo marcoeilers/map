@@ -1,6 +1,8 @@
 import jason.asSemantics.*;
+import jason.asSyntax.*;
 import jason.*;
 import java.util.*;
+import java.util.Map.*;
 import java.io.*;
 import java.util.logging.*;
 
@@ -28,6 +30,30 @@ public class TraderAgClass extends Agent {
 		// construct offers and requests
 		List<ItemDescriptor> offers = parseItems(properties.getProperty("items.offered"));
 		List<ItemDescriptor> requests = parseItems(properties.getProperty("items.requested"));
+		
+		// add initial sell beliefs from offers
+		for(ItemDescriptor offer : offers) {
+			Literal sellBelief = ASSyntax.createLiteral("sellBelief", new NumberTermImpl(offer.getPriceLimit()));
+			for(Entry<String, String> attribute : offer.getAttributes())
+				sellBelief.addTerm(new StringTermImpl(attribute.getValue()));
+			try {
+				addBel(sellBelief);
+			} catch(RevisionFailedException e) {
+				throw new RuntimeException(e.getMessage(), e);
+			}
+		}
+		
+		// add initial buy beliefs from requests
+		for(ItemDescriptor request : requests) {
+			Literal buyBelief = ASSyntax.createLiteral("buyBelief", new NumberTermImpl(request.getPriceLimit()));
+			for(Entry<String, String> attribute : request.getAttributes())
+				buyBelief.addTerm(new StringTermImpl(attribute.getValue()));
+			try {
+				addBel(buyBelief);
+			} catch(RevisionFailedException e) {
+				throw new RuntimeException(e.getMessage(), e);
+			}
+		}
 		
 		logger.info("Agent '" + agentName + "' offers " + offers.size() + " items and requests " + requests.size() + " items.");
 	}
