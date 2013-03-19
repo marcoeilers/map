@@ -11,7 +11,7 @@ public class ItemDB {
 	 * Mapping from items to traders that either offer these items or request
 	 * these items.
 	 */
-	private final Map<ItemDescriptor, String> offeredItems, requestedItems;
+	private final Map<ItemDescriptor, List<String>> offeredItems, requestedItems;
 
 	private static ItemDB instance;
 
@@ -22,8 +22,8 @@ public class ItemDB {
 	}
 
 	private ItemDB() {
-		offeredItems = new HashMap<ItemDescriptor, String>();
-		requestedItems = new HashMap<ItemDescriptor, String>();
+		offeredItems = new HashMap<ItemDescriptor, List<String>>();
+		requestedItems = new HashMap<ItemDescriptor, List<String>>();
 	}
 
 	/**
@@ -33,7 +33,11 @@ public class ItemDB {
 	 * @param agent
 	 */
 	public void addOffer(ItemDescriptor item, String agent) {
-		offeredItems.put(item, agent);
+		List<String> sellers = offeredItems.get(item);
+		if(sellers == null)
+			sellers = new ArrayList<String>();
+		sellers.add(agent);
+		offeredItems.put(item, sellers);
 	}
 
 	/**
@@ -43,7 +47,7 @@ public class ItemDB {
 	 * @param agent
 	 */
 	public void removeOffer(ItemDescriptor item, String agent) {
-		offeredItems.remove(item);
+		offeredItems.get(item).remove(agent);
 	}
 
 	/**
@@ -53,7 +57,11 @@ public class ItemDB {
 	 * @param agent
 	 */
 	public void addRequest(ItemDescriptor item, String agent) {
-		requestedItems.put(item, agent);
+		List<String> buyers = requestedItems.get(item);
+		if(buyers == null)
+			buyers = new ArrayList<String>();
+		buyers.add(agent);
+		requestedItems.put(item, buyers);
 	}
 
 	/**
@@ -63,7 +71,7 @@ public class ItemDB {
 	 * @param agent
 	 */
 	public void removeRequest(ItemDescriptor item, String agent) {
-		requestedItems.remove(item);
+		requestedItems.get(item).remove(agent);
 	}
 
 	/**
@@ -74,17 +82,8 @@ public class ItemDB {
 	 * @return
 	 */
 	public List<String> getBuyers(ItemDescriptor offer) {
-		// find possible matching requested items
-		List<ItemDescriptor> matchingItems = new ArrayList<ItemDescriptor>();
-		for (ItemDescriptor request : requestedItems.keySet())
-			if (offer.equals(request))
-				matchingItems.add(request);
-
-		// get all buyers for these items
-		List<String> buyers = new ArrayList<String>();
-		for (ItemDescriptor matchingItem : matchingItems)
-			buyers.add(requestedItems.get(matchingItem));
-		return buyers;
+		List<String> buyers = requestedItems.get(offer);
+		return buyers == null ? new ArrayList<String>() : buyers;
 	}
 
 	/**
@@ -95,17 +94,8 @@ public class ItemDB {
 	 * @return
 	 */
 	public List<String> getSellers(ItemDescriptor request) {
-		// find possible matching requested items
-		List<ItemDescriptor> matchingItems = new ArrayList<ItemDescriptor>();
-		for (ItemDescriptor offer : offeredItems.keySet())
-			if (offer.equals(request))
-				matchingItems.add(offer);
-
-		// get all sellers for these items
-		List<String> sellers = new ArrayList<String>();
-		for (ItemDescriptor matchingItem : matchingItems)
-			sellers.add(offeredItems.get(matchingItem));
-		return sellers;
+		List<String> sellers = offeredItems.get(request);
+		return sellers == null ? new ArrayList<String>() : sellers;
 	}
 
 }
