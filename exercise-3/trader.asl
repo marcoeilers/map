@@ -7,7 +7,7 @@ minStep(0.1).
 
 /* Initial goals */
 
-offers([],18).
+//offers([],18).
 
 empty([]).
 
@@ -162,7 +162,7 @@ bestNegotiation(Product,[First|Rest],BestSeller,BestPrice,Best) :-
  
 +!reactToBuyOffer(Product,Seller,Price,true) : not lastPrice(Product,Seller,LastPrice) <-
  ?requests(Product,MaxPrice);
- +lastPrice(Product,Seler,MaxPrice / 2.0);
+ +lastPrice(Product,Seller,MaxPrice / 2.0);
  !reactToBuyOffer(Product,Seller,Price,false). // FIXME Initial is not actually false 
  
 +!reactToBuyOffer(Product,Seller,Price,false) : lastPrice(Product,Seller,LastPrice)
