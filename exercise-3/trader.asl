@@ -1,5 +1,7 @@
 // Agent trader in project exercise3.mas2j
 
+negoStep(0.2).
+
 /* Initial beliefs and rules */
 
 /* Initial goals */
@@ -49,24 +51,56 @@ bestNegotiation(Product,[First|Rest],BestSeller,BestPrice,Best) :-
  !setupSales(Product,Buyers).
 
 +!setupSales(Product,[]) : findBestSale(Product,Best) & not (Best = null) <-
- !makeSaleOffer(Product,Best).
+ !makeSaleOffer(Product,Best,true).
 +!setupSales(Product,[First|Rest]) : true <-
  ?offers(Product,Price);
  +lastPrice(Product,First,Price * 2);
  !setupSales(Product,Rest).				
 
-+!makeSaleOffer(Product,Buyer) : true <-
++!makeSaleOffer(Product,Buyer,Initial) : true <-
  .my_name(Me);
  ?lastPrice(Product,Buyer,OldPrice);
  ?offers(Product,MinPrice);
  +waitingFor(Product,Buyer);
- .send(Buyer,achieve,reactToBuyOffer(Product,Me,MinPrice)).
+ +initialSent(Product,Buyer);
+ .send(Buyer,achieve,reactToBuyOffer(Product,Me,MinPrice,Initial)).
  
-+!reactToSaleOffer(Product,Buyer,Price) : not lastPrice(Product,Buyer,LastPrice) <-
- .print("dont know this one yet").
++!reactToSaleOffer(Product,Buyer,Price,true) : not lastPrice(Product,Buyer,LastPrice) <-
+ ?offers(Product,MinPrice);
+ +lastPrice(Product,Buyer,2 * MinPrice);
+ !reactToSaleOffer(Product,Buyer,Price,false). // FIXME Initial is not actually false 
  
-+!reactToSaleOffer(Product,Buyer,Price) : lastPrice(Product,Buyer,LastPrice) <-
- .print("i know this one!").
++!reactToSaleOffer(Product,Buyer,Price,false) : lastPrice(Product,Buyer,LastPrice)
+                                              & (waitingFor(Product,Buyer) 
+											    |waitingFor(Product,null) 
+												|not waitingFor(Product,Anyone))<-
+ !respondToSaleOffer(Product,Buyer,Price).
+
++!respondToSaleOffer(Product,Buyer,Price) : findBestSale(Product)
+                                          & lastPrice(Product,Buyer,LastPrice)
+										  & offers(Product,MinPrice)
+										  & negoStep(Step)
+										  & ((LastPrice - MinPrice)*Step) >= 0.1
+										  & (LastPrice - ((LastPrice - MinPrice)*Step)) > Price <-
+ .print("sale counterproposal").
+
++!respondToSaleOffer(Product,Buyer,Price) : findBestSale(Product)
+                                          & lastPrice(Product,Buyer,LastPrice)
+										  & offers(Product,MinPrice)
+										  & negoStep(Step)
+										  & (not((LastPrice - MinPrice)*Step) >= 0.1
+										  & (LastPrice - ((LastPrice - MinPrice)*Step)) > Price) 
+										  & Price <= MinPrice <-
+ .print("sale accept").
+ 
++!respondToSaleOffer(Product,Buyer,Price) : findBestSale(Product)
+                                          & lastPrice(Product,Buyer,LastPrice)
+										  & offers(Product,MinPrice)
+										  & negoStep(Step)
+										  & (not((LastPrice - MinPrice)*Step) >= 0.1
+										  & (LastPrice - ((LastPrice - MinPrice)*Step)) > Price) 
+										  & Price > MinPrice <-
+ .print("sale reject").
  
 /* Plans for Buyer */
 
@@ -81,22 +115,53 @@ bestNegotiation(Product,[First|Rest],BestSeller,BestPrice,Best) :-
  !setupNegotiations(Product,Sellers).
 
 +!setupNegotiations(Product,[]) : findBestNegotiation(Product,Best) & not (Best = null) <-
- !makeBuyOffer(Product,Best).
+ !makeBuyOffer(Product,Best,true).
 +!setupNegoriations(Product,[First|Rest]) : true <-
  ?requests(Product,Price);
  +lastPrice(Product,First,Price / 2);
  !setupNegotiations(Product,Rest).				
 
-+!makeBuyOffer(Product,Seller) : true <-
++!makeBuyOffer(Product,Seller,Initial) : true <-
  .my_name(Me);
  ?lastPrice(Product,Seller,OldPrice);
  ?requests(Product,MaxPrice);
  +waitingFor(Product,Seller);
- .send(Seller,achieve,reactToSaleOffer(Product,Me,MaxPrice)).
+ .send(Seller,achieve,reactToSaleOffer(Product,Me,MaxPrice,Initial)).
  
-+!reactToBuyOffer(Product,Seller,Price) : not lastPrice(Product,Seller,LastPrice) <-
- .print("dont know this one yet").
++!reactToBuyOffer(Product,Seller,Price,true) : not lastPrice(Product,Seller,LastPrice) <-
+ ?requests(Product,MaxPrice);
+ +lastPrice(Product,Seler,MaxPrice / 2.0);
+ !reactToBuyOffer(Product,Seller,Price,false). // FIXME Initial is not actually false 
  
-+!reactToBuyOffer(Product,Seller,Price) : lastPrice(Product,Seller,LastPrice) <-
- .print("i know this one!").
++!reactToBuyOffer(Product,Seller,Price,false) : lastPrice(Product,Seller,LastPrice)
+                                              & (waitingFor(Product,Seller) 
+											    |waitingFor(Product,null) 
+												|not waitingFor(Product,Anyone))<-
+ !respondToBuyOffer(Product,Seller,Price).
+
++!respondToBuyOffer(Product,Seller,Price) : findBestNegotiation(Product)
+                                          & lastPrice(Product,Seller,LastPrice)
+										  & requests(Product,MaxPrice)
+										  & negoStep(Step)
+										  & ((MaxPrice-LastPrice)*Step) >= 0.1
+										  & (LastPrice + ((MaxPrice-LastPrice)*Step)) < Price <-
+ .print("buy counterproposal").
+
++!respondToBuyOffer(Product,Seller,Price) : findBestSale(Product)
+                                          & lastPrice(Product,Seller,LastPrice)
+										  & requests(Product,MaxPrice)
+										  & negoStep(Step)
+										  & (not((MaxPrice-LastPrice)*Step) >= 0.1
+										  & (LastPrice + ((MaxPrice-LastPrice)*Step)) < Price) 
+										  & Price <= MaxPrice <-
+ .print("buy accept").
+ 
++!respondToBuyOffer(Product,Seller,Price) : findBestSale(Product)
+                                          & lastPrice(Product,Seller,LastPrice)
+										  & requests(Product,MaxPrice)
+										  & negoStep(Step)
+										  & (not((MaxPrice-LastPrice)*Step) >= 0.1
+										  & (LastPrice + ((MaxPrice-LastPrice)*Step)) < Price)  
+										  & Price > MaxPrice <-
+ .print("buy reject").
 
