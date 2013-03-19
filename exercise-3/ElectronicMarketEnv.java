@@ -3,6 +3,7 @@
 import jason.asSyntax.*;
 import jason.environment.*;
 import java.util.logging.*;
+import java.util.*;
 
 public class ElectronicMarketEnv extends Environment {
 
@@ -23,22 +24,27 @@ public class ElectronicMarketEnv extends Environment {
 
     @Override
     public boolean executeAction(String agName, Structure action) {
-		if("addOffer".equals(agName)) {
+		String functor = action.getFunctor();
+		if("env_add_offer".equals(functor)) {
+			itemDB.addOffer(ItemDescriptor.fromTerms(action.getTerms()), agName);
 			return true;
-		} else if("removeOffer".equals(agName)) {
+		} else if("env_remove_offer".equals(functor)) {
+			itemDB.removeOffer(ItemDescriptor.fromTerms(action.getTerms()), agName);
 			return true;
-		} else if("addRequest".equals(agName)) {
+		} else if("env_add_request".equals(functor)) {
+			itemDB.addRequest(ItemDescriptor.fromTerms(action.getTerms()), agName);
 			return true;
-		} else if("removeRequest".equals(agName)) {
+		} else if("env_remove_request".equals(functor)) {
+			itemDB.removeRequest(ItemDescriptor.fromTerms(action.getTerms()), agName);
 			return true;
-		} else if("getBuyers".equals(agName)) {
+		} else if("env_get_buyers".equals(functor)) {
 			return true;
-		} else if("getSellers".equals(agName)) {
+		} else if("env_get_sellers".equals(functor)) {
 			return true;
 		}
 		
 		// we did not handle the action
-		logger.info("Action '" + action + "' is not implemented in the environment.");
+		logger.info("Agent '" + agName + "' tries to execute action '" + functor + "' which is not implemented in the environment.");
         return false;
     }
 
