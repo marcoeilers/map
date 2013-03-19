@@ -5,7 +5,8 @@ negoStep(0.2).
 /* Initial beliefs and rules */
 
 /* Initial goals */
-offers(rabbit,6).
+
+offers([],18).
 
 empty([]).
 
@@ -47,6 +48,7 @@ bestNegotiation(Product,[First|Rest],BestSeller,BestPrice,Best) :-
 
 +!setBuyers(Product,Buyers) : empty(Buyers) <- .print("No Buyers for now.").
 +!setBuyers(Product,Buyers) : not empty(Buyers) <- 
+ .print("Got buyers.");
  +sales(Product,Buyers);
  !setupSales(Product,Buyers).
 
