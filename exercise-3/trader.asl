@@ -69,6 +69,9 @@ bestNegotiation(Product,[First|Rest],BestSeller,BestPrice,Best) :-
  .print("sends initial offer",OldPrice);
  .send(Buyer,achieve,reactToBuyOffer(Product,Me,OldPrice,true)).
  
++!makeSaleOffer(Product,Buyer,true) : lastPrice(Product,Buyer,_) & initialSent(Product,Buyer) <-
+ .print("wanted to send initial offer, but did not because already sent reply.").
+ 
 +!makeSaleOffer(Product,Buyer,false) : true <-
  .my_name(Me);
  ?lastPrice(Product,Buyer,OldPrice);
@@ -155,7 +158,7 @@ bestNegotiation(Product,[First|Rest],BestSeller,BestPrice,Best) :-
  +lastPrice(Product,First,Price / 2);
  !setupNegotiations(Product,Rest).				
 
-+!makeBuyOffer(Product,Seller,true) : not initialSent(Product,Seller) <-
++!makeBuyOffer(Product,Seller,true) : lastPrice(Product,Seller,_) & not initialSent(Product,Seller) <-
  .my_name(Me);
  ?lastPrice(Product,Seller,OldPrice);
  ?requests(Product,MaxPrice);
@@ -163,6 +166,9 @@ bestNegotiation(Product,[First|Rest],BestSeller,BestPrice,Best) :-
  +waitingFor(Product,Seller);
  .print("sends initial offer");
  .send(Seller,achieve,reactToSaleOffer(Product,Me,OldPrice,true)).
+ 
++!makeBuyOffer(Product,Seller,true) : lastPrice(Product,Seller,_) & not initialSent(Product,Seller) <-
+ .print("wanted to send initial offer, but did not because already sent reply.").
  
 +!makeBuyOffer(Product,Seller,false) : true <-
  .my_name(Me);
@@ -176,14 +182,13 @@ bestNegotiation(Product,[First|Rest],BestSeller,BestPrice,Best) :-
  .print("sends counteroffer",Me,Product,OldPrice + ((MaxPrice-OldPrice)*StepFactor));
  .send(Seller,achieve,reactToSaleOffer(Product,Me,OldPrice + ((MaxPrice-OldPrice)*StepFactor),false)).
  
-+!reactToBuyOffer(Product,Seller,Price,true) : not lastPrice(Product,Seller,LastPrice) <-
++!reactToBuyOffer(Product,Seller,Price,true) : not initialSent(Product,Seller) & not lastPrice(Product,Seller,LastPrice) <-
  ?requests(Product,MaxPrice);
  +lastPrice(Product,Seller,MaxPrice / 2.0);
  !addNegotiation(Product,Seller);
  !reactToBuyOffer(Product,Seller,Price,false). // FIXME Initial is not actually false 
  
-+!reactToBuyOffer(Product,Seller,Price,false) : lastPrice(Product,Seller,LastPrice)
-                                              <-
++!reactToBuyOffer(Product,Seller,Price,Initial) : lastPrice(Product,Seller,LastPrice) <-
  !respondToBuyOffer(Product,Seller,Price).
  
 +!reactToBuyOffer(Product,Seller,Price,true) :  initialSent(Product,Seller) <-// FIXME Whatever
