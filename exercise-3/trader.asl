@@ -128,9 +128,10 @@ bestNegotiation(Product,[First|Rest],BestSeller,BestPrice,Best) :-
 										  & Price > MinPrice <-
  .print("sale reject",Price," ",LastPrice," ",MinPrice," ",LastPrice - ((LastPrice - MinPrice)*StepFactor)).
  
-+!respondToSaleOffer(Product,Buyer,Price) : findBestSale(Product,Best)
-                                          & lastPrice(Product,Best,LastPrice)
-										  & offers(Product,MinPrice) <- 
++!respondToSaleOffer(Product,Buyer,Price) : true <- 
+ ?findBestSale(Product,Best)
+ ?lastPrice(Product,Best,LastPrice)
+ ?offers(Product,MinPrice)
  .print("sale error ",Price," ",LastPrice," ",MinPrice," ",LastPrice - ((LastPrice - MinPrice)*StepFactor)).
  
 +!addSale(Product,Buyer) : not sales(Product,Anything) <-
@@ -224,9 +225,10 @@ bestNegotiation(Product,[First|Rest],BestSeller,BestPrice,Best) :-
 										  & Price > MaxPrice <-
  .print("buy reject",Price," ",LastPrice," ",MaxPrice," ",LastPrice + ((MaxPrice-LastPrice)*StepFactor)).
  
-+!respondToBuyOffer(Product,Seller,Price) : findBestNegotiation(Product,Best)
-                                          & lastPrice(Product,Best,LastPrice)
-										  & requests(Product,MaxPrice) <-
++!respondToBuyOffer(Product,Seller,Price) : true <-
+ ?findBestNegotiation(Product,Best);
+ ?lastPrice(Product,Best,LastPrice);
+ ?requests(Product,MaxPrice);
  .print("error: ",Price," ",LastPrice," ",MaxPrice," ",LastPrice + ((MaxPrice-LastPrice)*StepFactor)).
  
 +!addNegotiation(Product,Seller) : not negotiations(Product,Anything) <-
