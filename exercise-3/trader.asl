@@ -47,9 +47,9 @@ bestNegotiation(Product,[First|Rest],BestSeller,BestPrice,Best) :-
  .send(matchmaker,achieve,registerOffer(Product,Me));
  .send(matchmaker,achieve,getBuyers(Product,Me)).
 
-+!setBuyers(Product,Buyers) : empty(Buyers) <- .print("No Buyers for now.").
++!setBuyers(Product,Buyers) : empty(Buyers) <- .print("No Buyers for now for ",Product).
 +!setBuyers(Product,Buyers) : not empty(Buyers) <- 
- .print("Got buyers.");
+ .print("Got buyers for ",Product);
  +sales(Product,Buyers);
  !setupSales(Product,Buyers).
 
@@ -60,9 +60,9 @@ bestNegotiation(Product,[First|Rest],BestSeller,BestPrice,Best) :-
 
 +!setupSales(Product,[]) : true <-
  ?sales(Product,TestBuyers);
- .print("in setupSales: ",TestBuyers);
+ //.print("in setupSales: ",TestBuyers);
  ?findBestSale(Product,Best);
- .print("in setupSales 3: ",Best);
+ //.print("in setupSales 3: ",Best);
  !makeSaleOffer(Product,Best,true).			
 
 +!makeSaleOffer(Product,Buyer,true) : lastPrice(Product,Buyer,TODO) & not initialSent(Product,Buyer) <-
@@ -71,11 +71,11 @@ bestNegotiation(Product,[First|Rest],BestSeller,BestPrice,Best) :-
  ?offers(Product,MinPrice);
  +waitingFor(Product,Buyer);
  +initialSent(Product,Buyer);
- .print("sends initial offer",OldPrice);
+ .print("sends initial offer for ",Product,OldPrice);
  .send(Buyer,achieve,reactToBuyOffer(Product,Me,OldPrice,true)).
  
 +!makeSaleOffer(Product,Buyer,true) : lastPrice(Product,Buyer,_) & initialSent(Product,Buyer) <-
- .print("wanted to send initial offer, but did not because already sent reply.").
+ .print("wanted to send initial offer, but did not because already sent reply.",Product).
  
 +!makeSaleOffer(Product,Buyer,false) : true <-
  .my_name(Me);
@@ -86,7 +86,7 @@ bestNegotiation(Product,[First|Rest],BestSeller,BestPrice,Best) :-
  ?stepFactor(StepFactor);
  -lastPrice(Product,Buyer,OldPrice);
  +lastPrice(Product,Buyer,OldPrice - ((OldPrice-MinPrice)*StepFactor));
- .print("sends noninitial offer");
+ .print("sends noninitial offer for ",Product);
  .send(Buyer,achieve,reactToBuyOffer(Product,Me,OldPrice - ((OldPrice-MinPrice)*StepFactor),false)).
  
 +!reactToSaleOffer(Product,Buyer,Price,true) : not lastPrice(Product,Buyer,LastPrice) <-
@@ -110,7 +110,7 @@ bestNegotiation(Product,[First|Rest],BestSeller,BestPrice,Best) :-
 										  & minStep(MinStep)
 										  & ((LastPrice - MinPrice)*StepFactor) >= MinStep
 										  & (LastPrice - ((LastPrice - MinPrice)*StepFactor)) > Price <-
- .print("sale counterproposal",Price," ",LastPrice," ",MinPrice," ",LastPrice - ((LastPrice - MinPrice)*StepFactor));
+ .print("sale counterproposal for ",Product,Price," ",LastPrice," ",MinPrice," ",LastPrice - ((LastPrice - MinPrice)*StepFactor));
  !makeSaleOffer(Product,Buyer,false).
 
 +!respondToSaleOffer(Product,Buyer,Price) : findBestSale(Product,Best)
@@ -121,7 +121,7 @@ bestNegotiation(Product,[First|Rest],BestSeller,BestPrice,Best) :-
 										  & not (((LastPrice - MinPrice)*StepFactor) >= MinStep
 										  & LastPrice - ((LastPrice - MinPrice)*StepFactor) > Price) 
 										  & Price >= MinPrice <-
- .print("sale accept",Price," ",LastPrice," ",MinPrice," ",LastPrice - ((LastPrice - MinPrice)*StepFactor)).
+ .print("sale accept for ",Product,Price," ",LastPrice," ",MinPrice," ",LastPrice - ((LastPrice - MinPrice)*StepFactor)).
  
 +!respondToSaleOffer(Product,Buyer,Price) : findBestSale(Product,Best)
                                           & lastPrice(Product,Best,LastPrice)
@@ -131,13 +131,13 @@ bestNegotiation(Product,[First|Rest],BestSeller,BestPrice,Best) :-
 										  & not (((LastPrice - MinPrice)*StepFactor) >= MinStep
 										  & LastPrice - ((LastPrice - MinPrice)*StepFactor) > Price) 
 										  & Price < MinPrice <-
- .print("sale reject",Price," ",LastPrice," ",MinPrice," ",LastPrice - ((LastPrice - MinPrice)*StepFactor)).
+ .print("sale reject for ",Product,Price," ",LastPrice," ",MinPrice," ",LastPrice - ((LastPrice - MinPrice)*StepFactor)).
  
 +!respondToSaleOffer(Product,Buyer,Price) : true <- 
  ?findBestSale(Product,Best);
  ?lastPrice(Product,Best,LastPrice);
  ?offers(Product,MinPrice);
- .print("sale error ",Price," ",LastPrice," ",MinPrice," ",LastPrice - ((LastPrice - MinPrice)*StepFactor)).
+ .print("sale error for ",Product,Price," ",LastPrice," ",MinPrice," ",LastPrice - ((LastPrice - MinPrice)*StepFactor)).
  
 +!addSale(Product,Buyer) : not sales(Product,Anything) <-
  +sales(Product,[Buyer]).
@@ -152,7 +152,7 @@ bestNegotiation(Product,[First|Rest],BestSeller,BestPrice,Best) :-
  .send(matchmaker,achieve,registerRequest(Product,Me));
  .send(matchmaker,achieve,getSellers(Product,Me)).
 
-+!setSellers(Product,Sellers) : empty(Sellers) <- .print("No Sellers for now.").
++!setSellers(Product,Sellers) : empty(Sellers) <- .print("No Sellers for now for ",Product).
 +!setSellers(Product,Sellers) : not empty(Sellers) <- 
  +negotiations(Product,Sellers);
  !setupNegotiations(Product,Sellers).
@@ -170,11 +170,11 @@ bestNegotiation(Product,[First|Rest],BestSeller,BestPrice,Best) :-
  ?requests(Product,MaxPrice);
  +initialSent(Product,Seller);
  +waitingFor(Product,Seller);
- .print("sends initial offer");
+ .print("sends initial offer for ",Product);
  .send(Seller,achieve,reactToSaleOffer(Product,Me,OldPrice,true)).
  
 +!makeBuyOffer(Product,Seller,true) : lastPrice(Product,Seller,_) & not initialSent(Product,Seller) <-
- .print("wanted to send initial offer, but did not because already sent reply.").
+ .print("wanted to send initial offer, but did not because already sent reply.",Product).
  
 +!makeBuyOffer(Product,Seller,false) : true <-
  .my_name(Me);
@@ -185,11 +185,11 @@ bestNegotiation(Product,[First|Rest],BestSeller,BestPrice,Best) :-
  ?stepFactor(StepFactor);
  -lastPrice(Product,Seller,OldPrice);
  +lastPrice(Product,Seller,OldPrice + ((MaxPrice-OldPrice)*StepFactor));
- .print("sends counteroffer",Me,Product,OldPrice + ((MaxPrice-OldPrice)*StepFactor));
+ .print("sends counteroffer for ",Product,Me,OldPrice + ((MaxPrice-OldPrice)*StepFactor));
  .send(Seller,achieve,reactToSaleOffer(Product,Me,OldPrice + ((MaxPrice-OldPrice)*StepFactor),false)).
  
 +!reactToBuyOffer(Product,Seller,Price,true) :  initialSent(Product,Seller) <-// FIXME Whatever
- .print("One message skipped"). 
+ .print("One message skipped for ",Product). 
 
 +!reactToBuyOffer(Product,Seller,Price,true) : not initialSent(Product,Seller) & not lastPrice(Product,Seller,LastPrice) <-
  ?requests(Product,MaxPrice);
@@ -207,7 +207,7 @@ bestNegotiation(Product,[First|Rest],BestSeller,BestPrice,Best) :-
 										  & minStep(MinStep)
 										  & ((MaxPrice-LastPrice)*StepFactor) >= MinStep
 										  & (LastPrice + ((MaxPrice-LastPrice)*StepFactor)) < Price <-
- .print("buy counterproposal",Price," ",LastPrice," ",MaxPrice," ",LastPrice + ((MaxPrice-LastPrice)*StepFactor));
+ .print("buy counterproposal for ",Product,Price," ",LastPrice," ",MaxPrice," ",LastPrice + ((MaxPrice-LastPrice)*StepFactor));
  !makeBuyOffer(Product,Seller,false).
 
 +!respondToBuyOffer(Product,Seller,Price) : findBestNegotiation(Product,Best)
@@ -218,7 +218,7 @@ bestNegotiation(Product,[First|Rest],BestSeller,BestPrice,Best) :-
 										  & not (((MaxPrice-LastPrice)*StepFactor) >= MinStep
 										  & LastPrice + ((MaxPrice-LastPrice)*StepFactor) < Price) 
 										  & Price <= MaxPrice <-
- .print("buy accept",Price," ",LastPrice," ",MaxPrice," ",LastPrice + ((MaxPrice-LastPrice)*StepFactor)).
+ .print("buy accept for",Product,Price," ",LastPrice," ",MaxPrice," ",LastPrice + ((MaxPrice-LastPrice)*StepFactor)).
  
 +!respondToBuyOffer(Product,Seller,Price) : findBestNegotiation(Product,Best)
                                           & lastPrice(Product,Best,LastPrice)
@@ -228,13 +228,13 @@ bestNegotiation(Product,[First|Rest],BestSeller,BestPrice,Best) :-
 										  & not (((MaxPrice-LastPrice)*StepFactor) >= MinStep
 										  & LastPrice + ((MaxPrice-LastPrice)*StepFactor) < Price)  
 										  & Price > MaxPrice <-
- .print("buy reject",Price," ",LastPrice," ",MaxPrice," ",LastPrice + ((MaxPrice-LastPrice)*StepFactor)).
+ .print("buy reject for ",Product,Price," ",LastPrice," ",MaxPrice," ",LastPrice + ((MaxPrice-LastPrice)*StepFactor)).
  
 +!respondToBuyOffer(Product,Seller,Price) : true <-
  ?findBestNegotiation(Product,Best);
  ?lastPrice(Product,Best,LastPrice);
  ?requests(Product,MaxPrice);
- .print("error: ",Price," ",LastPrice," ",MaxPrice," ",LastPrice + ((MaxPrice-LastPrice)*StepFactor)).
+ .print("error: ",Product,Price," ",LastPrice," ",MaxPrice," ",LastPrice + ((MaxPrice-LastPrice)*StepFactor)).
  
 +!addNegotiation(Product,Seller) : not negotiations(Product,Anything) <-
  +negotiations(Product,[Seller]).
