@@ -115,7 +115,7 @@ bestNegotiation(Product,[First|Rest],BestSeller,BestPrice,Best) :-
 										  & minStep(MinStep)
 										  & not (((LastPrice - MinPrice)*StepFactor) >= MinStep
 										  & LastPrice - ((LastPrice - MinPrice)*StepFactor) > Price) 
-										  & Price <= MinPrice <-
+										  & Price >= MinPrice <-
  .print("sale accept",Price," ",LastPrice," ",MinPrice," ",LastPrice - ((LastPrice - MinPrice)*StepFactor)).
  
 +!respondToSaleOffer(Product,Buyer,Price) : findBestSale(Product,Best)
@@ -125,7 +125,7 @@ bestNegotiation(Product,[First|Rest],BestSeller,BestPrice,Best) :-
 										  & minStep(MinStep)
 										  & not (((LastPrice - MinPrice)*StepFactor) >= MinStep
 										  & LastPrice - ((LastPrice - MinPrice)*StepFactor) > Price) 
-										  & Price > MinPrice <-
+										  & Price < MinPrice <-
  .print("sale reject",Price," ",LastPrice," ",MinPrice," ",LastPrice - ((LastPrice - MinPrice)*StepFactor)).
  
 +!respondToSaleOffer(Product,Buyer,Price) : true <- 
