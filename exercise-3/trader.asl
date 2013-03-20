@@ -165,10 +165,10 @@ bestNegotiation(Product,[First|Rest],BestSeller,BestPrice,Best) :-
  !setupNegotiations(Product,Rest).				
 
 +!makeBuyOffer(Product,Seller,true) : lastPrice(Product,Seller,_) & not initialSent(Product,Seller) <-
+ +initialSent(Product,Seller);
  .my_name(Me);
  ?lastPrice(Product,Seller,OldPrice);
  ?requests(Product,MaxPrice);
- +initialSent(Product,Seller);
  +waitingFor(Product,Seller);
  .print("sends initial offer for ",Product);
  .send(Seller,achieve,reactToSaleOffer(Product,Me,OldPrice,true)).
@@ -198,11 +198,11 @@ bestNegotiation(Product,[First|Rest],BestSeller,BestPrice,Best) :-
 										  & minStep(MinStep)
 										  & ((MaxPrice-LastPrice)*StepFactor) >= MinStep
 										  & (LastPrice + ((MaxPrice-LastPrice)*StepFactor)) < Price <-
+ +initialSent(Product,Seller);
  .print("buy counterproposal for ",Product,Price," ",LastPrice," ",MaxPrice," ",LastPrice + ((MaxPrice-LastPrice)*StepFactor));
  .my_name(Me);
  ?lastPrice(Product,Seller,OldPrice);
  ?requests(Product,MaxPrice);
- +initialSent(Product,Seller);
  +waitingFor(Product,Seller);
  ?stepFactor(StepFactor);
  -lastPrice(Product,Seller,OldPrice);
