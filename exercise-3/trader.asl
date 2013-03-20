@@ -129,9 +129,9 @@ bestNegotiation(Product,[First|Rest],BestSeller,BestPrice,Best) :-
  .print("sale reject",Price," ",LastPrice," ",MinPrice," ",LastPrice - ((LastPrice - MinPrice)*StepFactor)).
  
 +!respondToSaleOffer(Product,Buyer,Price) : true <- 
- ?findBestSale(Product,Best)
- ?lastPrice(Product,Best,LastPrice)
- ?offers(Product,MinPrice)
+ ?findBestSale(Product,Best);
+ ?lastPrice(Product,Best,LastPrice);
+ ?offers(Product,MinPrice);
  .print("sale error ",Price," ",LastPrice," ",MinPrice," ",LastPrice - ((LastPrice - MinPrice)*StepFactor)).
  
 +!addSale(Product,Buyer) : not sales(Product,Anything) <-
