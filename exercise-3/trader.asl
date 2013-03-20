@@ -173,20 +173,8 @@ bestNegotiation(Product,[First|Rest],BestSeller,BestPrice,Best) :-
  .print("sends initial offer for ",Product);
  .send(Seller,achieve,reactToSaleOffer(Product,Me,OldPrice,true)).
  
-+!makeBuyOffer(Product,Seller,true) : lastPrice(Product,Seller,_) & not initialSent(Product,Seller) <-
++!makeBuyOffer(Product,Seller,true) : initialSent(Product,Seller) <-
  .print("wanted to send initial offer, but did not because already sent reply.",Product).
- 
-+!makeBuyOffer(Product,Seller,false) : true <-
- .my_name(Me);
- ?lastPrice(Product,Seller,OldPrice);
- ?requests(Product,MaxPrice);
- +initialSent(Product,Seller);
- +waitingFor(Product,Seller);
- ?stepFactor(StepFactor);
- -lastPrice(Product,Seller,OldPrice);
- +lastPrice(Product,Seller,OldPrice + ((MaxPrice-OldPrice)*StepFactor));
- .print("sends counteroffer for ",Product,Me,OldPrice + ((MaxPrice-OldPrice)*StepFactor));
- .send(Seller,achieve,reactToSaleOffer(Product,Me,OldPrice + ((MaxPrice-OldPrice)*StepFactor),false)).
  
 +!reactToBuyOffer(Product,Seller,Price,true) :  initialSent(Product,Seller) <-// FIXME Whatever
  .print("One message skipped for ",Product). 
@@ -211,7 +199,16 @@ bestNegotiation(Product,[First|Rest],BestSeller,BestPrice,Best) :-
 										  & ((MaxPrice-LastPrice)*StepFactor) >= MinStep
 										  & (LastPrice + ((MaxPrice-LastPrice)*StepFactor)) < Price <-
  .print("buy counterproposal for ",Product,Price," ",LastPrice," ",MaxPrice," ",LastPrice + ((MaxPrice-LastPrice)*StepFactor));
- !makeBuyOffer(Product,Seller,false).
+ .my_name(Me);
+ ?lastPrice(Product,Seller,OldPrice);
+ ?requests(Product,MaxPrice);
+ +initialSent(Product,Seller);
+ +waitingFor(Product,Seller);
+ ?stepFactor(StepFactor);
+ -lastPrice(Product,Seller,OldPrice);
+ +lastPrice(Product,Seller,OldPrice + ((MaxPrice-OldPrice)*StepFactor));
+ .print("sends counteroffer for ",Product,Me,OldPrice + ((MaxPrice-OldPrice)*StepFactor));
+ .send(Seller,achieve,reactToSaleOffer(Product,Me,OldPrice + ((MaxPrice-OldPrice)*StepFactor),false)).
 
 +!respondToBuyOffer(Product,Seller,Price,Initial) : findBestNegotiation(Product,Best)
                                           & lastPrice(Product,Best,LastPrice)
