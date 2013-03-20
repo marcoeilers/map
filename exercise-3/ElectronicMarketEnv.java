@@ -57,7 +57,7 @@ public class ElectronicMarketEnv extends Environment {
 			Literal setBuyers = ASSyntax.createLiteral("setBuyers");
 			ListTerm buyerTerms = new ListTermImpl();
 			for(String buyer : buyers)
-				buyerTerms.add(new StringTermImpl(buyer));
+				buyerTerms.add(ASSyntax.createLiteral(buyer));
 			setBuyers.addTerm(buyerTerms);
 			setBuyers.addTerm(attributes);
 			setBuyers.addTerm(trader);
@@ -68,7 +68,7 @@ public class ElectronicMarketEnv extends Environment {
 			Literal setSellers = ASSyntax.createLiteral("setSellers");
 			ListTerm sellerTerms = new ListTermImpl();
 			for(String seller : sellers)
-				sellerTerms.add(new StringTermImpl(seller));
+				sellerTerms.add(ASSyntax.createLiteral(seller));
 			setSellers.addTerm(sellerTerms);
 			setSellers.addTerm(attributes);
 			setSellers.addTerm(trader);
