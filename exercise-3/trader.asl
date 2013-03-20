@@ -86,7 +86,7 @@ bestNegotiation(Product,[First|Rest],BestSeller,BestPrice,Best) :-
 +!makeSaleOffer(Product,Buyer,true) : lastPrice(Product,Buyer,_) & initialSent(Product,Buyer) <-
  .print("wanted to send initial offer, but did not because already sent reply.",Product).
  
-+!makeSaleOffer(Product,Buyer,false) : not waitingFor(Product,null) & not waitingFor(Product,Buyer) <-
++!makeSaleOffer(Product,Buyer,false) : (not waitingFor(Product,null)) & (not waitingFor(Product,Buyer)) <-
  !addRespondTo(Product,Buyer).
  
 +!makeSaleOffer(Product,Buyer,false) : true <-
@@ -109,13 +109,13 @@ bestNegotiation(Product,[First|Rest],BestSeller,BestPrice,Best) :-
  !addSale(Product,Buyer);
  !reactToSaleOffer(Product,Buyer,Price,false). // FIXME Initial is not actually false 
  
-+!reactToSaleOffer(Product,Buyer,Price,Initial) : not waitingFor(Product,null) & not waitingFor(Product,Buyer) <-
++!reactToSaleOffer(Product,Buyer,Price,Initial) : (not waitingFor(Product,null)) & (not waitingFor(Product,Buyer)) <-
  !addRespondTo(Product,Buyer).
 
 +!reactToSaleOffer(Product,Buyer,Price,Initial) : lastPrice(Product,Buyer,_) <-
  !respondToSaleOffer(Product,Buyer,Price).
  
-+!respondToSaleOffer(Product,Buyer,Price) : not waitingFor(Product,null) & not waitingFor(Product,Buyer) <-
++!respondToSaleOffer(Product,Buyer,Price) : (not waitingFor(Product,null)) & (not waitingFor(Product,Buyer)) <-
  !addRespondTo(Product,Buyer).
 
 +!respondToSaleOffer(Product,Buyer,Price) : findBestSale(Product,Best)
@@ -204,13 +204,13 @@ bestNegotiation(Product,[First|Rest],BestSeller,BestPrice,Best) :-
  !addNegotiation(Product,Seller);
  !reactToBuyOffer(Product,Seller,Price,true). // FIXME Initial is not actually false 
  
-+!reactToBuyOffer(Product,Seller,Price,Initial) : not waitingFor(Product,null) & not waitingFor(Product,Seller) <-
++!reactToBuyOffer(Product,Seller,Price,Initial) : (not waitingFor(Product,null)) & (not waitingFor(Product,Seller)) <-
  !addRespondTo(Product,Seller).
  
 +!reactToBuyOffer(Product,Seller,Price,Initial) : lastPrice(Product,Seller,LastPrice) <-
  !respondToBuyOffer(Product,Seller,Price,Initial).
  
-+!respondToBuyOffer(Product,Seller,Price,Initial) : not waitingFor(Product,null) & not waitingFor(Product,Seller) <-
++!respondToBuyOffer(Product,Seller,Price,Initial) : (not waitingFor(Product,null)) & (not waitingFor(Product,Seller)) <-
  !addRespondTo(Product,Seller).
  
 +!respondToBuyOffer(Product,Seller,_,true) : initialSent(Product,Seller) <-
