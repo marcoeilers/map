@@ -41,7 +41,7 @@ bestNegotiation(Product,[First|Rest],BestSeller,BestPrice,Best) :-
  
 /* Common plans */
 +!addRespondTo(Product,Partner) : true <-
- .print("addRespondTo: ",Product,Partner);
+ .print("\n\n\n\naddRespondTo: ",Product,Partner);
  ?waitingFor(Product,Who);
  .print("waiting for: ",Who).
 
