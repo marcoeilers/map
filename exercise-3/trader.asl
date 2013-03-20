@@ -38,6 +38,12 @@ bestNegotiation(Product,[First|Rest],BestSeller,BestPrice,Best) :-
  lastPrice(Product,First,LastPrice) & 
  LastPrice >= BestPrice & 
  bestNegotiation(Product,Rest,BestSeller,BestPrice,Best).
+ 
+/* Common plans */
++!addRespondTo(Product,Partner) : true <-
+ .print("addRespondTo: ",Product,Partner);
+ ?waitingFor(Product,Who);
+ .print("waiting for: ",Who).
 
 
 /* Plans for Seller */
