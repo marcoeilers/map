@@ -182,6 +182,9 @@ bestNegotiation(Product,[First|Rest],BestSeller,BestPrice,Best) :-
  .print("sends counteroffer",Me,Product,OldPrice + ((MaxPrice-OldPrice)*StepFactor));
  .send(Seller,achieve,reactToSaleOffer(Product,Me,OldPrice + ((MaxPrice-OldPrice)*StepFactor),false)).
  
++!reactToBuyOffer(Product,Seller,Price,true) :  initialSent(Product,Seller) <-// FIXME Whatever
+ .print("One message skipped"). 
+
 +!reactToBuyOffer(Product,Seller,Price,true) : not initialSent(Product,Seller) & not lastPrice(Product,Seller,LastPrice) <-
  ?requests(Product,MaxPrice);
  +lastPrice(Product,Seller,MaxPrice / 2.0);
@@ -190,9 +193,6 @@ bestNegotiation(Product,[First|Rest],BestSeller,BestPrice,Best) :-
  
 +!reactToBuyOffer(Product,Seller,Price,Initial) : lastPrice(Product,Seller,LastPrice) <-
  !respondToBuyOffer(Product,Seller,Price).
- 
-+!reactToBuyOffer(Product,Seller,Price,true) :  initialSent(Product,Seller) <-// FIXME Whatever
- .print("One message skipped").
 
 +!respondToBuyOffer(Product,Seller,Price) : findBestNegotiation(Product,Best)
                                           & lastPrice(Product,Best,LastPrice)
