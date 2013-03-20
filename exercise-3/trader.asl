@@ -57,7 +57,13 @@ bestNegotiation(Product,[First|Rest],BestSeller,BestPrice,Best) :-
  ?offers(Product,Price);
  +lastPrice(Product,First,Price * 2);
  !setupSales(Product,Rest).	
-+!setupSales(Product,[]) : findBestSale(Product,Best) & not (Best = null) <-
++!setupSales(Product,[]) : true <-
+ ?sales(Product,TestBuyers);
+ .print("in setupSales: ",TestBuyers);
+ ?lastPrice(Product,buyer,TestPrice);
+ .print("in setupSales 2: ",TestPrice);
+ ?findBestSale(Product,Best);
+ .print("in setupSales 3: ",Best);
  !makeSaleOffer(Product,Best,true).			
 
 +!makeSaleOffer(Product,Buyer,true) : lastPrice(Product,Buyer,TODO) & not initialSent(Product,Buyer) <-
