@@ -1,16 +1,52 @@
 // Agent trader in project exercise3.mas2j
 
+/*
+
+lastPrice(Product,Partner,Price) : The last price offered in the negotiation for
+Product with Partner.
+
+waitingFor(Product,Partner) : This trader is waiting for a message from Partner 
+in the negotiation about Product and may not send messages to others until it
+gets a response from Partner. If not waiting, Partner is null.
+
+respondTo(Product,List) : List of partners who expect a response concerning 
+Product.
+
+initialSent(Product,Partner) : This trader has sent an initial offer to Partner
+concerning Product. If this trader wants to buy Product, it will ignore incoming 
+initial offers from Partner concerning Product to avoid having two negotiations 
+about the same Product at once.
+
+sales(Product,List) : List of partners to who want Product.
+
+negotiations(Product,List) : List of partners who offer Product.
+
+offers(Product,MinPrice) : Indicates that this trader wants to sell Product for
+at least MinPrice. 
+
+requests(Product,MaxPrice) : Indicates that this trader wants to buy Product for
+at most MaxPrice. 
+
+sold(Product) : This Product has been sold, requests concerning it will be
+rejected.
+
+bought(Product) : As above.
+
+*/
+
+
+/* Constants */
+
 stepFactor(0.2).
 minStep(0.1).
 
-/* Initial beliefs and rules */
-
-/* Initial goals */
-
-//offers([],18).
+/* Rules */
 
 empty([]).
 
+
+// finds the sale with the highest lastPrice for the given product
+// (for seller)
 findBestSale(Product,Best) :- 
  sales(Product,Buyers) & 
  bestSale(Product,Buyers,null,0,Best).
@@ -27,6 +63,9 @@ bestSale(Product,[First|Rest],BestBuyer,BestPrice,Best) :-
  LastPrice <= BestPrice & 
  bestSale(Product,Rest,BestBuyer,BestPrice,Best).
  
+ 
+// same as above, but finds the negotiation with lowest lastPrice
+// (for buyer)
 findBestNegotiation(Product,Best) :- 
  negotiations(Product,Sellers) & 
  bestNegotiation(Product,Sellers,null,1000000,Best).
@@ -43,6 +82,8 @@ bestNegotiation(Product,[First|Rest],BestSeller,BestPrice,Best) :-
  LastPrice >= BestPrice & 
  bestNegotiation(Product,Rest,BestSeller,BestPrice,Best).
 
+ 
+// Removes atom arg1 from list arg0, result in arg2
 removeFromList([],_,[]).
  
 removeFromList([Partner|Rest],Partner,Result) :-
@@ -53,6 +94,7 @@ removeFromList([Someone|Rest],Partner,[Someone|Result]) :-
 
  
 /* Common plans */
+
 @addRespondToNew[atomic]
 +!addRespondTo(Product,Partner)  : not respondTo(Product,Anyone) <-
  .print("added RespondTo",Product,Partner);
@@ -101,9 +143,7 @@ removeFromList([Someone|Rest],Partner,[Someone|Result]) :-
 @setupSalesEmpty[atomic]
 +!setupSales(Product,[])  : true <-
  ?sales(Product,TestBuyers);
- //.print("in setupSales: ",TestBuyers);
  ?findBestSale(Product,Best);
- //.print("in setupSales 3: ",Best);
  !makeSaleOffer(Product,Best,true).			
 
 @makeSaleOfferInitialNotSent[atomic]
@@ -152,7 +192,7 @@ removeFromList([Someone|Rest],Partner,[Someone|Result]) :-
  ?offers(Product,MinPrice);
  +lastPrice(Product,Buyer,2 * MinPrice);
  !addSale(Product,Buyer);
- !reactToSaleOffer(Product,Buyer,Price,false). // FIXME Initial is not actually false 
+ !reactToSaleOffer(Product,Buyer,Price,false).
  
 @reactSaleWaitingForOther[atomic]
 +!reactToSaleOffer(Product,Buyer,Price,Initial)  : not (waitingFor(Product,Buyer) | waitingFor(Product,null)) <-
@@ -174,7 +214,6 @@ removeFromList([Someone|Rest],Partner,[Someone|Result]) :-
 										  & minStep(MinStep)
 										  & ((LastPrice - MinPrice)*StepFactor) >= MinStep
 										  & (LastPrice - ((LastPrice - MinPrice)*StepFactor)) > Price <-
- //.print("sale counterproposal for ",Product,Price," ",LastPrice," ",MinPrice," ",LastPrice - ((LastPrice - MinPrice)*StepFactor));
  !makeSaleOffer(Product,Buyer,false).
 
 @respondSaleAccept[atomic]
