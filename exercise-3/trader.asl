@@ -143,6 +143,10 @@ removeFromList([Someone|Rest],Partner,[Someone|Result]) :-
  !removeRespondTo(Product,Buyer);
  .send(Buyer,achieve,reactToBuyOffer(Product,Me,OldPrice - ((OldPrice-MinPrice)*StepFactor),false)).
  
+@reactToSaleSold[atomic]
++!reactToSaleOffer(Product,Buyer,_,_) : sold(Product) <-
+ !rejectSaleOffer(Product,Buyer).
+ 
 @reactSaleUnknownPartner[atomic]
 +!reactToSaleOffer(Product,Buyer,Price,true)  : not lastPrice(Product,Buyer,LastPrice) <-
  ?offers(Product,MinPrice);
@@ -182,7 +186,15 @@ removeFromList([Someone|Rest],Partner,[Someone|Result]) :-
 										  & not (((LastPrice - MinPrice)*StepFactor) >= MinStep
 										  & LastPrice - ((LastPrice - MinPrice)*StepFactor) > Price) 
 										  & Price >= MinPrice <-
- .print("sale accept for ",Product,Price," ",LastPrice," ",MinPrice," ",LastPrice - ((LastPrice - MinPrice)*StepFactor)).
+ .print("sale accept for ",Product,Price," ",LastPrice," ",MinPrice," ",LastPrice - ((LastPrice - MinPrice)*StepFactor));
+ ?.my_name(Me);
+ -waitingFor(Product,Buyer);
+ +waitingFor(Product,null);
+ !removeRespondTo(Product,Buyer);
+ ?respondTo(Product,List);
+ !removeOffer(Product,List);
+ +sold(Product);
+ .send(Buyer,achieve,handleAcceptBuy(Product,Me,Price)).
  
 @respondSaleReject[atomic]
 +!respondToSaleOffer(Product,Buyer,Price)  : findBestSale(Product,Best)
@@ -193,7 +205,9 @@ removeFromList([Someone|Rest],Partner,[Someone|Result]) :-
 										  & not (((LastPrice - MinPrice)*StepFactor) >= MinStep
 										  & LastPrice - ((LastPrice - MinPrice)*StepFactor) > Price) 
 										  & Price < MinPrice <-
- .print("sale reject for ",Product,Price," ",LastPrice," ",MinPrice," ",LastPrice - ((LastPrice - MinPrice)*StepFactor)).
+ .print("sale reject for ",Product,Price," ",LastPrice," ",MinPrice," ",LastPrice - ((LastPrice - MinPrice)*StepFactor));
+ !rejectSaleOffer(Product,Buyer);
+ !initiateNewRoundSale(Product).
  
 @respondSaleError[atomic]
 +!respondToSaleOffer(Product,Buyer,Price)  : true <- 
@@ -210,6 +224,59 @@ removeFromList([Someone|Rest],Partner,[Someone|Result]) :-
 +!addSale(Product,Buyer)  : sales(Product,OldSales) <-
  -sales(Product,OldSales);
  +sales(Product,[Buyer|OldSales]).
+ 
+@removeOfferEmpty[atomic]
++!removeOffer(Product,[]) : true <-
+ -offers(Product,Price).
+
+@removeOfferNonEmpty[atomic]
++!removeOffer(Product,[First|Rest]) : true <-
+ !rejectSaleOffer(Product,First);
+ !removeOffer(Product,Rest).
+
+@rejectSaleOffer[atomic]
++!rejectSaleOffer(Product,Buyer) : true <-
+ ?.my_name(Me);
+ !removeRespondTo(Product,Buyer);
+ -lastPrice(Product,Buyer,_);
+ ?sales(Product,Buyers);
+ ?removeFromList(Buyers,Buyer,NewList);
+ -sales(Product,Buyers);
+ +sales(Product,NewList);
+ .send(Buyer,achieve,handleRejectBuy(Product,Me)).
+ 
+@intiateSaleEmpty[atomic]
++!initiateNewRoundSale(Product) : findBestSale(Product,null) <-
+ .print("Currently noone else to contace for ",Product).
+ 
+@initiateSaleNonInitial[atomic]
++!initiateNewRoundSale(Product) : findBestSale(Product,Best) & initialSent(Product,Best) <-
+ !makeSaleOffer(Product,Best,false).
+ 
+@initiateSaleInitial[atomic]
++!initiateNewRoundSale(Product) : findBestSale(Product,Best) & not initialSent(Product,Best) <-
+ !makeSaleOffer(Product,Best,true).
+ 
+@handleAcceptSale[atomic]
++!handleAcceptSale(Product,Buyer,Price) : true <-
+ .print("Got accept for ",Product,Buyer);
+ -waitingFor(Product,Buyer);
+ +sold(Product);
+ !removeRespondTo(Product,Buyer);
+ ?respondTo(Product,List);
+ !removeOffer(Product,List).
+
+@handleRejectSale[atomic]
++!handleRejectSale(Product,Buyer) : true <-
+ !removeRespondTo(Product,Buyer);
+ -lastPrice(Product,Buyer,_);
+ ?sales(Product,Buyers);
+ ?removeFromList(Buyers,Buyer,NewList);
+ -sales(Product,Buyers);
+ +sales(Product,NewList);
+ .print("Got reject for ",Product,Buyer);
+ !initiateNewRoundSale(Product).
+ 
  
 /* Plans for Buyer */
 
@@ -254,6 +321,10 @@ removeFromList([Someone|Rest],Partner,[Someone|Result]) :-
 @makeBuyOfferInitialSent[atomic]
 +!makeBuyOffer(Product,Seller,true)  : initialSent(Product,Seller) <-
  .print("wanted to send initial offer, but did not because already sent reply.",Product).
+ 
+@reactToBuySold[atomic]
++!reactToBuyOffer(Product,Seller,_,_) : bought(Product) <-
+ !rejectBuyOffer(Product,Seller).
  
 @reactBuySkip[atomic]
 +!reactToBuyOffer(Product,Seller,Price,true)  :  initialSent(Product,Seller) <-// FIXME Whatever
@@ -314,7 +385,15 @@ removeFromList([Someone|Rest],Partner,[Someone|Result]) :-
 										  & not (((MaxPrice-LastPrice)*StepFactor) >= MinStep
 										  & LastPrice + ((MaxPrice-LastPrice)*StepFactor) < Price) 
 										  & Price <= MaxPrice <-
- .print("buy accept for",Product,Price," ",LastPrice," ",MaxPrice," ",LastPrice + ((MaxPrice-LastPrice)*StepFactor)).
+ .print("buy accept for",Product,Price," ",LastPrice," ",MaxPrice," ",LastPrice + ((MaxPrice-LastPrice)*StepFactor));
+ ?.my_name(Me);
+ -waitingFor(Product,Seller);
+ +waitingFor(Product,null);
+ !removeRespondTo(Product,Seller);
+ ?respondTo(Product,List);
+ !removeRequest(Product,List);
+ +bought(Product);
+ .send(Seller,achieve,handleAcceptSale(Product,Me,Price)).
  
 @respondBuyReject[atomic]
 +!respondToBuyOffer(Product,Seller,Price,Initial)  : findBestNegotiation(Product,Best)
@@ -325,7 +404,9 @@ removeFromList([Someone|Rest],Partner,[Someone|Result]) :-
 										  & not (((MaxPrice-LastPrice)*StepFactor) >= MinStep
 										  & LastPrice + ((MaxPrice-LastPrice)*StepFactor) < Price)  
 										  & Price > MaxPrice <-
- .print("buy reject for ",Product,Price," ",LastPrice," ",MaxPrice," ",LastPrice + ((MaxPrice-LastPrice)*StepFactor)).
+ .print("buy reject for ",Product,Price," ",LastPrice," ",MaxPrice," ",LastPrice + ((MaxPrice-LastPrice)*StepFactor));
+ !rejectBuyOffer(Product,Seller);
+ !initiateNewRoundBuy(Product).
  
 @respondBuyError[atomic]
 +!respondToBuyOffer(Product,Seller,Price,Initial)  : true <-
@@ -342,3 +423,55 @@ removeFromList([Someone|Rest],Partner,[Someone|Result]) :-
 +!addNegotiation(Product,Seller)  : negotiations(Product,OldNegotiations) <-
  -negotiations(Product,OldNegotiations);
  +negotiations(Product,[Seller|OldNegotiations]).
+ 
+@removeRequestEmpty[atomic]
++!removeRequest(Product,[]) : true <-
+ -requests(Product,Price).
+
+@removeRequestNonEmpty[atomic]
++!removeRequest(Product,[First|Rest]) : true <-
+ !rejectBuyOffer(Product,First);
+ !removeRequest(Product,Rest).
+
+@rejectBuyOffer[atomic]
++!rejectBuyOffer(Product,Seller) : true <-
+ ?.my_name(Me);
+ !removeRespondTo(Product,Seller);
+ -lastPrice(Product,Seller,_);
+ ?negotiations(Product,Sellers);
+ ?removeFromList(Sellers,Seller,NewList);
+ -negotiations(Product,Sellers);
+ +negotiations(Product,NewList);
+ .send(Seller,achieve,handleRejectSale(Product,Me)).
+ 
+@intiateBuyEmpty[atomic]
++!initiateNewRoundBuy(Product) : findBestNegotiation(Product,null) <-
+ .print("Currently noone else to contace for ",Product).
+ 
+@initiateBuyNonInitial[atomic]
++!initiateNewRoundBuy(Product) : findBestNegotiation(Product,Best) & initialSent(Product,Best) <-
+ !makeBuyOffer(Product,Best,false).
+ 
+@initiateBuyInitial[atomic]
++!initiateNewRoundBuy(Product) : findBestNegotiation(Product,Best) & not initialSent(Product,Best) <-
+ !makeBuyOffer(Product,Best,true).
+ 
+@handleAcceptBuy[atomic]
++!handleAcceptBuy(Product,Seller,Price) : true <-
+ .print("Got accept for ",Product,Seller);
+ -waitingFor(Product,Seller);
+ +bought(Product);
+ !removeRespondTo(Product,Seller);
+ ?respondTo(Product,List);
+ !removeRequest(Product,List).
+
+@handleRejectBuy[atomic]
++!handleRejectBuy(Product,Seller) : true <-
+ .print("Got reject for ",Product,Seller);
+ !removeRespondTo(Product,Seller);
+ -lastPrice(Product,Seller,_);
+ ?negotiations(Product,Sellers);
+ ?removeFromList(Sellers,Seller,NewList);
+ -negotiations(Product,Buyers);
+ +negotiations(Product,NewList);
+ !initiateNewRoundBuy(Product).
