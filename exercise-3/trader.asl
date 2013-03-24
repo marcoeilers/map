@@ -526,7 +526,7 @@ removeFromList([Someone|Rest],Partner,[Someone|Result]) :-
  
 @intiateBuyEmpty[atomic]
 +!initiateNewRoundBuy(Product) : findBestNegotiation(Product,null) <-
- .print("Currently no other buyers for ",Product).
+ .print("Currently no other sellers for ",Product).
  
 @initiateBuyNonInitial[atomic]
 +!initiateNewRoundBuy(Product) : findBestNegotiation(Product,Best) 
