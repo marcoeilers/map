@@ -416,7 +416,7 @@ removeFromList([Someone|Rest],Partner,[Someone|Result]) :-
 										  & not (((MaxPrice-LastPrice)*StepFactor) >= MinStep
 										  & LastPrice + ((MaxPrice-LastPrice)*StepFactor) < Price) 
 										  & Price <= MaxPrice <-
- .print("Accepting offer from",Seller," to buy ",Product," for ",LastPrice + ((MaxPrice-LastPrice)*StepFactor));
+ .print("Accepting offer from ",Seller," to buy ",Product," for ",Price);
  ?.my_name(Me);
  -waitingFor(Product,Seller);
  +waitingFor(Product,null);
