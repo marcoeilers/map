@@ -95,6 +95,8 @@ removeFromList([Someone|Rest],Partner,[Someone|Result]) :-
  
 /* Common plans */
 
+// makes a note that a specific partner needs to get a response for its offer
+// concerning Product in the future
 @addRespondToNew[atomic]
 +!addRespondTo(Product,Partner)  : not respondTo(Product,Anyone) <-
  .print("added RespondTo",Product,Partner);
@@ -106,6 +108,8 @@ removeFromList([Someone|Rest],Partner,[Someone|Result]) :-
  -respondTo(Product,Current);
  +respondTo(Product,[Partner|Current]).
  
+ 
+// removes such a note, if it exists
 @removeRespondToEmpty[atomic]
 +!removeRespondTo(Product,Partner)  : not respondTo(Product,_) <-
  +respondTo(Product,[]).
@@ -118,6 +122,8 @@ removeFromList([Someone|Rest],Partner,[Someone|Result]) :-
 
 /* Plans for Seller */
 
+// initial event an item to be sold
+// registers this item, asks matchmaker for buyers
 @offers[atomic]
 +offers(Product,Price)  : true <- 
  .my_name(Me);
@@ -125,8 +131,11 @@ removeFromList([Someone|Rest],Partner,[Someone|Result]) :-
  .send(matchmaker,achieve,registerOffer(Product,Me));
  .send(matchmaker,achieve,getBuyers(Product,Me)).
 
+// called by matchmaker as a response to getBuyers
+// saves the received information in sales(Pruduct,Buyers)
 @setBuyersEmpty[atomic]
-+!setBuyers(Product,Buyers)  : empty(Buyers) <- .print("No Buyers for now for ",Product).
++!setBuyers(Product,Buyers)  : empty(Buyers) <- 
+ .print("No Buyers for now for ",Product).
 
 @setBuyersNonEmpty[atomic]
 +!setBuyers(Product,Buyers)  : not empty(Buyers) <- 
@@ -134,6 +143,9 @@ removeFromList([Someone|Rest],Partner,[Someone|Result]) :-
  +sales(Product,Buyers);
  !setupSales(Product,Buyers).
 
+// sets up a lastPrice for every new potential Buyer
+// initial price is 2*MinPrice
+// starts an initial offer after finishing
 @setupSalesNonEmpty[atomic]
 +!setupSales(Product,[First|Rest])  : true <-
  ?offers(Product,Price);
@@ -146,8 +158,11 @@ removeFromList([Someone|Rest],Partner,[Someone|Result]) :-
  ?findBestSale(Product,Best);
  !makeSaleOffer(Product,Best,true).			
 
+// makeSaleOffer sends an offer for a Product to a potential Buyer.
+// the third argument specifies if the offer is an initial offer
 @makeSaleOfferInitialNotSent[atomic]
-+!makeSaleOffer(Product,Buyer,true)  : lastPrice(Product,Buyer,_) & not initialSent(Product,Buyer) <-
++!makeSaleOffer(Product,Buyer,true)  : lastPrice(Product,Buyer,_) 
+                                     & not initialSent(Product,Buyer) <-
  ?waitingFor(Product,Current);
  -waitingFor(Product,Current);
  +waitingFor(Product,Buyer);
@@ -159,12 +174,16 @@ removeFromList([Someone|Rest],Partner,[Someone|Result]) :-
  !removeRespondTo(Product,Buyer);
  .send(Buyer,achieve,reactToBuyOffer(Product,Me,OldPrice,true)).
  
+// this version does nothing because an initial offer has already been made
+// (e.g. as a response to another offer)
 @makeSaleOfferInitialSent[atomic]
-+!makeSaleOffer(Product,Buyer,true)  : lastPrice(Product,Buyer,_) & initialSent(Product,Buyer) <-
- .print("TODO").
++!makeSaleOffer(Product,Buyer,true)  : lastPrice(Product,Buyer,_) 
+                                     & initialSent(Product,Buyer) <-
+ .print(""). // do nothing
  
 @makeSaleOfferWaitingForOther[atomic]
-+!makeSaleOffer(Product,Buyer,false)  : not (waitingFor(Product,Buyer) | waitingFor(Product,null)) <-
++!makeSaleOffer(Product,Buyer,false)  : not (waitingFor(Product,Buyer) 
+                                            | waitingFor(Product,null)) <-
  !addRespondTo(Product,Buyer).
  
 @makeSaleOfferStandard[atomic]
@@ -183,10 +202,14 @@ removeFromList([Someone|Rest],Partner,[Someone|Result]) :-
  !removeRespondTo(Product,Buyer);
  .send(Buyer,achieve,reactToBuyOffer(Product,Me,OldPrice - ((OldPrice-MinPrice)*StepFactor),false)).
  
+ 
+// reactToSale is called by partners who offer to buy a product
+// if an item is already sold, the offer is just rejected
 @reactToSaleSold[atomic]
 +!reactToSaleOffer(Product,Buyer,_,_) : sold(Product) <-
  !rejectSaleOffer(Product,Buyer).
  
+// if we get an offer from an unknown buyer, set up the necessary data structures
 @reactSaleUnknownPartner[atomic]
 +!reactToSaleOffer(Product,Buyer,Price,true)  : not lastPrice(Product,Buyer,LastPrice) <-
  ?offers(Product,MinPrice);
@@ -194,18 +217,23 @@ removeFromList([Someone|Rest],Partner,[Someone|Result]) :-
  !addSale(Product,Buyer);
  !reactToSaleOffer(Product,Buyer,Price,false).
  
+// if we wait for someone else, respond later
 @reactSaleWaitingForOther[atomic]
-+!reactToSaleOffer(Product,Buyer,Price,Initial)  : not (waitingFor(Product,Buyer) | waitingFor(Product,null)) <-
++!reactToSaleOffer(Product,Buyer,Price,Initial)  : not (waitingFor(Product,Buyer) 
+                                                       | waitingFor(Product,null)) <-
  !addRespondTo(Product,Buyer).
 
 @reactSaleStandard[atomic]
 +!reactToSaleOffer(Product,Buyer,Price,Initial)  : lastPrice(Product,Buyer,_) <-
  !respondToSaleOffer(Product,Buyer,Price).
  
+// respondToSaleOffer is called by reactToSaleOffer and sends an actual response
 @respondSaleWaitingForOther[atomic]
-+!respondToSaleOffer(Product,Buyer,Price)  : not ( waitingFor(Product,Buyer) | waitingFor(Product,null)) <-
++!respondToSaleOffer(Product,Buyer,Price)  : not ( waitingFor(Product,Buyer) 
+                                                 | waitingFor(Product,null)) <-
  !addRespondTo(Product,Buyer).
 
+// check if we can make a counter offer
 @respondSaleCounter[atomic]
 +!respondToSaleOffer(Product,Buyer,Price)  : findBestSale(Product,Best)
                                           & lastPrice(Product,Best,LastPrice)
@@ -216,6 +244,7 @@ removeFromList([Someone|Rest],Partner,[Someone|Result]) :-
 										  & (LastPrice - ((LastPrice - MinPrice)*StepFactor)) > Price <-
  !makeSaleOffer(Product,Buyer,false).
 
+// otherwise, accept if offered price > MinPrice
 @respondSaleAccept[atomic]
 +!respondToSaleOffer(Product,Buyer,Price)  : findBestSale(Product,Best)
                                           & lastPrice(Product,Best,LastPrice)
@@ -233,8 +262,10 @@ removeFromList([Someone|Rest],Partner,[Someone|Result]) :-
  ?respondTo(Product,List);
  !removeOffer(Product,List);
  +sold(Product);
- .send(Buyer,achieve,handleAcceptBuy(Product,Me,Price)).
+ .send(Buyer,achieve,handleAcceptBuy(Product,Me,Price));
+ .send(matchmaker,achieve,removeOffer(Product,Me)).
  
+// otherwise reject and make a new offer to someone else if possible
 @respondSaleReject[atomic]
 +!respondToSaleOffer(Product,Buyer,Price)  : findBestSale(Product,Best)
                                           & lastPrice(Product,Best,LastPrice)
@@ -248,6 +279,7 @@ removeFromList([Someone|Rest],Partner,[Someone|Result]) :-
  !rejectSaleOffer(Product,Buyer);
  !initiateNewRoundSale(Product).
  
+// adds a potential Buyer to the list of buyers for a product
 @addSaleEmpty[atomic]
 +!addSale(Product,Buyer)  : not sales(Product,Anything) <-
  +sales(Product,[Buyer]).
@@ -257,6 +289,7 @@ removeFromList([Someone|Rest],Partner,[Someone|Result]) :-
  -sales(Product,OldSales);
  +sales(Product,[Buyer|OldSales]).
  
+// deletes the information that this agent offers a product
 @removeOfferEmpty[atomic]
 +!removeOffer(Product,[]) : true <-
  -offers(Product,Price).
@@ -266,6 +299,7 @@ removeFromList([Someone|Rest],Partner,[Someone|Result]) :-
  !rejectSaleOffer(Product,First);
  !removeOffer(Product,Rest).
 
+// sends out a reject message
 @rejectSaleOffer[atomic]
 +!rejectSaleOffer(Product,Buyer) : true <-
  ?.my_name(Me);
@@ -277,18 +311,23 @@ removeFromList([Someone|Rest],Partner,[Someone|Result]) :-
  +sales(Product,NewList);
  .send(Buyer,achieve,handleRejectBuy(Product,Me)).
  
+// starts a new round of negotiations for a given product if possible
 @intiateSaleEmpty[atomic]
 +!initiateNewRoundSale(Product) : findBestSale(Product,null) <-
  .print("Currently no other buyers for ",Product).
  
 @initiateSaleNonInitial[atomic]
-+!initiateNewRoundSale(Product) : findBestSale(Product,Best) & initialSent(Product,Best) <-
++!initiateNewRoundSale(Product) : findBestSale(Product,Best) 
+                                & initialSent(Product,Best) <-
  !makeSaleOffer(Product,Best,false).
  
 @initiateSaleInitial[atomic]
-+!initiateNewRoundSale(Product) : findBestSale(Product,Best) & not initialSent(Product,Best) <-
++!initiateNewRoundSale(Product) : findBestSale(Product,Best) 
+                                & not initialSent(Product,Best) <-
  !makeSaleOffer(Product,Best,true).
  
+// called by other agents who accept our offer
+// removes the information that this agent sells the product
 @handleAcceptSale[atomic]
 +!handleAcceptSale(Product,Buyer,Price) : true <-
  .print("Sold ",Product," to ",Buyer," for ",Price);
@@ -296,8 +335,13 @@ removeFromList([Someone|Rest],Partner,[Someone|Result]) :-
  +sold(Product);
  !removeRespondTo(Product,Buyer);
  ?respondTo(Product,List);
- !removeOffer(Product,List).
+ !removeOffer(Product,List);
+ ?.my_name(Me);
+ .send(matchmaker,achieve,removeOffer(Product,Me)).
 
+// called by other agents who react to our offer
+// deletes the other agent from the list of buyers for Product,
+// then initiates a new round of negotiations for Product if possible
 @handleRejectSale[atomic]
 +!handleRejectSale(Product,Buyer) : true <-
  !removeRespondTo(Product,Buyer);
@@ -311,6 +355,7 @@ removeFromList([Someone|Rest],Partner,[Someone|Result]) :-
  
  
 /* Plans for Buyer */
+// comments only where behaviour differs from the Seller
 
 @requests[atomic]
 +requests(Product,Price)  : true <- 
@@ -320,7 +365,8 @@ removeFromList([Someone|Rest],Partner,[Someone|Result]) :-
  .send(matchmaker,achieve,getSellers(Product,Me)).
 
 @setSellersEmpty[atomic]
-+!setSellers(Product,Sellers)  : empty(Sellers) <- .print("No Sellers for now for ",Product).
++!setSellers(Product,Sellers)  : empty(Sellers) <- 
+ .print("No Sellers for now for ",Product).
 
 @setSellersNonEmpty[atomic]
 +!setSellers(Product,Sellers)  : not empty(Sellers) <- 
@@ -328,7 +374,8 @@ removeFromList([Someone|Rest],Partner,[Someone|Result]) :-
  !setupNegotiations(Product,Sellers).
 
 @setupNegosEmpty[atomic]
-+!setupNegotiations(Product,[])  : findBestNegotiation(Product,Best) & not (Best = null) <-
++!setupNegotiations(Product,[])  : findBestNegotiation(Product,Best) 
+                                 & not (Best = null) <-
  !makeBuyOffer(Product,Best,true).
  
 @setupNegosNonEmpty[atomic]
@@ -338,7 +385,8 @@ removeFromList([Someone|Rest],Partner,[Someone|Result]) :-
  !setupNegotiations(Product,Rest).				
 
 @makeBuyOfferInitialNotSent[atomic]
-+!makeBuyOffer(Product,Seller,true)  : lastPrice(Product,Seller,_) & not initialSent(Product,Seller) <-
++!makeBuyOffer(Product,Seller,true)  : lastPrice(Product,Seller,_) 
+                                     & not initialSent(Product,Seller) <-
  +initialSent(Product,Seller);
  ?waitingFor(Product,Current);
  -waitingFor(Product,Current);
@@ -352,25 +400,29 @@ removeFromList([Someone|Rest],Partner,[Someone|Result]) :-
  
 @makeBuyOfferInitialSent[atomic]
 +!makeBuyOffer(Product,Seller,true)  : initialSent(Product,Seller) <-
- .print("TODO").
+ .print("").
  
 @reactToBuySold[atomic]
 +!reactToBuyOffer(Product,Seller,_,_) : bought(Product) <-
  !rejectBuyOffer(Product,Seller).
- 
+
+// the buyer ignores incoming initial offers if it has already sent out an offer 
+// itself 
 @reactBuySkip[atomic]
 +!reactToBuyOffer(Product,Seller,Price,true)  :  initialSent(Product,Seller) <-
  .print("Ignored offer for ",Product," from ",Seller). 
 
 @reactBuyUnknownPartner[atomic]
-+!reactToBuyOffer(Product,Seller,Price,true)  : not initialSent(Product,Seller) & not lastPrice(Product,Seller,LastPrice) <-
++!reactToBuyOffer(Product,Seller,Price,true)  : not initialSent(Product,Seller) 
+                                              & not lastPrice(Product,Seller,LastPrice) <-
  ?requests(Product,MaxPrice);
  +lastPrice(Product,Seller,MaxPrice / 2.0);
  !addNegotiation(Product,Seller);
  !reactToBuyOffer(Product,Seller,Price,true). 
  
 @reactBuyWaitingForOther[atomic]
-+!reactToBuyOffer(Product,Seller,Price,Initial)  : not (waitingFor(Product,Seller) | waitingFor(Product,null)) <-
++!reactToBuyOffer(Product,Seller,Price,Initial)  : not (waitingFor(Product,Seller) 
+                                                       | waitingFor(Product,null)) <-
  !addRespondTo(Product,Seller).
  
 @reactBuyStandard[atomic]
@@ -378,9 +430,12 @@ removeFromList([Someone|Rest],Partner,[Someone|Result]) :-
  !respondToBuyOffer(Product,Seller,Price,Initial).
  
 @respondBuyWaitingForOther[atomic]
-+!respondToBuyOffer(Product,Seller,Price,Initial)  : not (waitingFor(Product,Seller) | waitingFor(Product,null)) <-
++!respondToBuyOffer(Product,Seller,Price,Initial)  : not (waitingFor(Product,Seller) 
+                                                         | waitingFor(Product,null)) <-
  !addRespondTo(Product,Seller).
  
+// the buyer ignores incoming initial offers if it has already sent out an offer 
+// itself
 @respondBuySkip[atomic]
 +!respondToBuyOffer(Product,Seller,_,true)  : initialSent(Product,Seller) <-
  .print("Ignored offer for ",Product," from ",Seller). 
@@ -424,7 +479,8 @@ removeFromList([Someone|Rest],Partner,[Someone|Result]) :-
  ?respondTo(Product,List);
  !removeRequest(Product,List);
  +bought(Product);
- .send(Seller,achieve,handleAcceptSale(Product,Me,Price)).
+ .send(Seller,achieve,handleAcceptSale(Product,Me,Price));
+ .send(matchmaker,achieve,removeRequest(Product,Me)).
  
 @respondBuyReject[atomic]
 +!respondToBuyOffer(Product,Seller,Price,Initial)  : findBestNegotiation(Product,Best)
@@ -473,11 +529,13 @@ removeFromList([Someone|Rest],Partner,[Someone|Result]) :-
  .print("Currently no other buyers for ",Product).
  
 @initiateBuyNonInitial[atomic]
-+!initiateNewRoundBuy(Product) : findBestNegotiation(Product,Best) & initialSent(Product,Best) <-
++!initiateNewRoundBuy(Product) : findBestNegotiation(Product,Best) 
+                               & initialSent(Product,Best) <-
  !makeBuyOffer(Product,Best,false).
  
 @initiateBuyInitial[atomic]
-+!initiateNewRoundBuy(Product) : findBestNegotiation(Product,Best) & not initialSent(Product,Best) <-
++!initiateNewRoundBuy(Product) : findBestNegotiation(Product,Best) 
+                               & not initialSent(Product,Best) <-
  !makeBuyOffer(Product,Best,true).
  
 @handleAcceptBuy[atomic]
@@ -487,7 +545,9 @@ removeFromList([Someone|Rest],Partner,[Someone|Result]) :-
  +bought(Product);
  !removeRespondTo(Product,Seller);
  ?respondTo(Product,List);
- !removeRequest(Product,List).
+ !removeRequest(Product,List);
+ ?.my_name(Me);
+ .send(matchmaker,achieve,removeRequest(Product,Me)).
 
 @handleRejectBuy[atomic]
 +!handleRejectBuy(Product,Seller) : true <-

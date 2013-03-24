@@ -11,6 +11,12 @@
 
 +!registerRequest(Product,Trader) : true <-
  envAddRequest(Product,Trader).
+ 
++!removeOffer(Product,Trader) : true <-
+ envRemoveOffer(Product,Trader).
+ 
++!removeRequest(Product,Trader) : true <-
+ envRemoveRequest(Product,Trader).
 
 +!getBuyers(Product,Trader) : true <-
  .print(Trader, " wants to sell ", Product);
