@@ -34,22 +34,15 @@ Since our negotiation algorithm was slightly underspecified in the original desi
 \subsection{Data Structures}
 For the traders we had to translate their knowledge about all ongoing negotiations into beliefs. The most important ones are the following:
 \begin{itemize}
-  \item \texttt{lastPrice(Product,Partner,Price)} The last price offered in the negotiation for
-Product with Partner.
-  \item \texttt{waitingFor(Product,Partner)} This trader is waiting for a message from Partner 
-in the negotiation about Product and may not send messages to others until it
-gets a response from Partner. If not waiting, Partner is null.
- \item \texttt{respondTo(Product,List)} List of partners who expect a response concerning 
-Product.
-\item \texttt{initialSent(Product,Partner)} This trader has sent an initial offer to Partner
-concerning Product. If this trader wants to buy Product, it will ignore incoming 
-initial offers from Partner concerning Product to avoid having two negotiations 
-about the same Product at once.
-\item \texttt{sales(Product,List)} List of partners to who want Product. The equivalent for the buyer is \texttt{negotiations(Product,List)}
-\item \texttt{offers(Product,MinPrice) } Indicates that this trader wants to sell Product for
-at least MinPrice. The equivalent for the buyer is \texttt{requests(Product,MaxPrice)}
-\item \texttt{sold(Product)} This Product has been sold, requests concerning it will be
-rejected. The equivalent for the buyer is \texttt{bought(Product)}
+  \item \texttt{lastPrice(Product,Partner,Price)} The last price an agent has offered to a partner in the negotiation about a specific product.
+  \item \texttt{waitingFor(Product,Partner)} An agent should never make an offer for a specific product while it has not received a response to another offer it made for that product to a different trader, since this might result in it selling (or buying) the product twice if both offers are accepted. \texttt{waitingFor} is used to remember the fact that an agent is still waiting for a response from a specific partner concerning a specific product. If an agent is not waiting for anyone, \texttt{Partner} is \texttt{null}.
+ \item \texttt{respondTo(Product,List)} The fact that agents wait for responses means that all offers must eventually get a response, since otherwise an agent might just stop all negotiations for a product. \texttt{respondTo} keeps track of a list of partners who all need to get a response concerning a product. Once an offer is accepted, all agents in this list will get a \texttt{reject} message.
+\item \texttt{initialSent(Product,Partner)} It is possible that two agents simultaneously send each other an initial offer for a product. Since we want to avoid double negotiations, the buyer will ignore the incoming initial offer if it has already sent one itself. To keep track of this information, \texttt{initialSent} is used, which denotes that an agent has sent out an initial offer for a product to a partner.
+\item \texttt{sales(Product,List)} stores a list of partners to who want to buy a product. The equivalent for the buyer is \texttt{negotiations(Product,List)}.
+\item \texttt{offers(Product,MinPrice) } Indicates that this trader wants to sell a product for
+at least MinPrice. The equivalent for the buyer is \texttt{requests(Product,MaxPrice)}.
+\item \texttt{sold(Product)} This product has been sold, requests concerning it will be
+rejected. The equivalent for the buyer is \texttt{bought(Product)}.
 \end{itemize}
 
 \noindent The backing Java structures (\texttt{ItemDB} and \texttt{ItemDescriptor}) could be reused almost entirely. We only switched from describing items as a set of key-value-pairs of attributes to simply a list of attributes because this could easily be represented in AgentSpeak using arrays. This also reduced the complexity of the configuration files and finding buyers and sellers for matching items in the \texttt{ItemDB}. Since pattern matching using the complete list of attributes for an item is performed, the UUID for each item descriptor was not necessary anymore to uniquely identify an item that is being negotiated.
@@ -59,8 +52,10 @@ The \texttt{ItemDB} is the only part of a custom environment, \texttt{Electronic
 The previously introduced concept of initializing requests and offers for each trader using configuration files has been realized by defining a common base class for trader agents (\texttt{TraderAgClass}). When an agent's initialization is performed, a configuration file is used (determined by the agent's name) to register offers and requests with the matchmaker. Note that we shipped the same set of of offers and requests as in the previous exercise.
 
 
-
 \subsection{Ease of Implementation}
+The implementation felt slightly more complicated than the JADE version, mostly because it took some time to get used to Jason's Prolog-like syntax and event-based programming model. One thing that troubled us for some time was Jason's nondeterminism, especially in combination with parallel execution of several plans. The latter caused quite a lot of errors in our earlier inplementations, and the former made it hard or impossible to reproduce them. We eventually solved this problem by marking all plans as \texttt{atomic}, so that once a plan is selected, only this plan will be followed until it is finished. Only then can other plans be executed. This solved a lot of problems that occured when incoming offers were processed \emph{while}, for example, initial offers were made.
+
+We also had to make some compromises due to Jason's event based handling of goals, especially the fact that goals are forgotten once a plan to achieve them has been executed. Since, in some cases, we did not want the agent to forget its goals, we made them beliefs instead. One example is the fact that an agent wants to sell a product: This would normally be considered a goal, but since it is possible that buyers only enter the market place at a later time, we cannot allow the agent to forget about this goal once an initial plan has been followed. This is why we introduced the belief \texttt{offers(Product,MinPrice)} instead, which then creates other goals to start a negotiation, but which is still remembered if there are no buyers initially. This is why long-term goals are almost exclusively modelled as beliefs, whereas the steps to achieve these goals are usually modelled as goals.
 
 
 \subsection{Changes to Design}
