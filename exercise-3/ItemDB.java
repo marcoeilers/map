@@ -5,6 +5,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+/**
+ * The database of requested and offered items.
+ *
+ */
 public class ItemDB {
 
 	/**

@@ -25,7 +25,7 @@ public class ItemDescriptor implements Serializable {
 	}
 
 	/**
-	 * Checks if this item has a specific attribute
+	 * Checks if this item has a specific attribute.
 	 * 
 	 * @param a
 	 * @return
@@ -34,6 +34,11 @@ public class ItemDescriptor implements Serializable {
 		return attributes.contains(a);
 	}
 	
+	/**
+	 * Returns a copy of the attributes of this item.
+	 *
+	 * @return
+	 */
 	public List<String> getAttributes() {
 		return new ArrayList<String>(attributes);
 	}
@@ -57,6 +62,11 @@ public class ItemDescriptor implements Serializable {
 		return priceLimit;
 	}
 	
+	/**
+	 * Returns a ListTerm of StringTerms of the attributes of this item (excluding the price limit).
+	 *
+	 * @return
+	 */
 	public Term toTerm() {
 		ListTerm attributeTerms = new ListTermImpl();
 		for(String attribute : attributes)
@@ -64,6 +74,12 @@ public class ItemDescriptor implements Serializable {
 		return attributeTerms;
 	}
 	
+	/**
+	 * Constructs an item from the specified ListTerm of StringTerms.
+	 *
+	 * @param term
+	 * @return
+	 */
 	public static ItemDescriptor fromTerm(Term term) {
 		if(!(term instanceof ListTerm))
 			throw new IllegalArgumentException("The term has to be an attribute list instead of " + term.getClass().getName() + ".");
@@ -77,8 +93,17 @@ public class ItemDescriptor implements Serializable {
 		return id;
 	}
 	
+	/**
+	 * Two items are equal if they have the same set of attributes in the same order (regardless of the price limit).
+	 *
+	 * @param o
+	 * @return
+	 */
 	@Override
 	public boolean equals(Object o) {
+		if(o == null)
+			return false;
+		
 		if(!(o instanceof ItemDescriptor))
 			return false;
 		
@@ -94,11 +119,19 @@ public class ItemDescriptor implements Serializable {
 		return true;
 	}
 	
+	/**
+	 * @see equals
+	 */
 	@Override
 	public int hashCode() {
 		return toString().split("@")[0].hashCode();
 	}
 	
+	/**
+	 * Creates a human-readable string representation of this item.
+	 *
+	 * @return
+	 */
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
