@@ -6,6 +6,10 @@ import java.util.Map.*;
 import java.io.*;
 import java.util.logging.*;
 
+/**
+ * Base class for agents that supports reading configuration files.
+ *
+ */
 public class TraderAgClass extends Agent {
 	
 	private Logger logger = Logger.getLogger("exercise-3.mas2j." + TraderAgClass.class.getName());
@@ -14,6 +18,7 @@ public class TraderAgClass extends Agent {
 	public void initAg() {
 		super.initAg();
 		
+		// get the agent's name to read the appropriate config file
 		String agentName = ts.getUserAgArch().getAgName();
 		
 		// read the properties file
@@ -48,6 +53,12 @@ public class TraderAgClass extends Agent {
 		logger.info("Agent '" + agentName + "' offers " + offers + " and requests " + requests + ".");
 	}
 	
+	/**
+	 * Parses an appropriately formatted string from a configuration file to a list of items.
+	 *
+	 * @param itemsString
+	 * @return
+	 */
 	private List<ItemDescriptor> parseItems(String itemsString) {
 		List<ItemDescriptor> items = new ArrayList<ItemDescriptor>();
 		if (itemsString != null) {
