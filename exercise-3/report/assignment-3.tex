@@ -29,9 +29,29 @@
 \newpage
 
 \section{Translation of Design into Implementation}
-
+Since our negotiation algorithm was slightly underspecified in the original design, we reused the algorithm from our JADE implementation: If several partners compete for one product, the seller will always make a new offer to the partner with the lowest previous offer (and the other way round). Both buyers and sellers move twenty percent closer to their respective minimal/maximal price with each offer, until either the difference between two offers becomes less than 10 cent, or their own next offer would be worse than the partner's last offer. When one of these cases is reached, they accept the incoming offer if it is within their price limits and reject it otherwise.
 
 \subsection{Data Structures}
+For the traders we had to translate their knowledge about all ongoing negotiations into beliefs. The most important ones are the following:
+\begin{itemize}
+  \item \texttt{lastPrice(Product,Partner,Price)} The last price offered in the negotiation for
+Product with Partner.
+  \item \texttt{waitingFor(Product,Partner)} This trader is waiting for a message from Partner 
+in the negotiation about Product and may not send messages to others until it
+gets a response from Partner. If not waiting, Partner is null.
+ \item \texttt{respondTo(Product,List)} List of partners who expect a response concerning 
+Product.
+\item \texttt{initialSent(Product,Partner)} This trader has sent an initial offer to Partner
+concerning Product. If this trader wants to buy Product, it will ignore incoming 
+initial offers from Partner concerning Product to avoid having two negotiations 
+about the same Product at once.
+\item \texttt{sales(Product,List)} List of partners to who want Product. The equivalent for the buyer is \texttt{negotiations(Product,List)}
+\item \texttt{offers(Product,MinPrice) } Indicates that this trader wants to sell Product for
+at least MinPrice. The equivalent for the buyer is \texttt{requests(Product,MaxPrice)}
+\item \texttt{sold(Product)} This Product has been sold, requests concerning it will be
+rejected. The equivalent for the buyer is \texttt{bought(Product)}
+\end{itemize}
+
 
 
 \subsection{Ease of Implementation}
