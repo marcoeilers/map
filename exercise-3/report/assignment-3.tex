@@ -29,7 +29,7 @@
 \newpage
 
 \section{Translation of Design into Implementation}
-Since our negotiation algorithm was slightly underspecified in the original design, we reused the algorithm from our JADE implementation: If several partners compete for one product, the seller will always make a new offer to the partner with the lowest previous offer (and the other way round). Both buyers and sellers move twenty percent closer to their respective minimal/maximal price with each offer, until either the difference between two offers becomes less than 10 cent, or their own next offer would be worse than the partner's last offer. When one of these cases is reached, they accept the incoming offer if it is within their price limits and reject it otherwise.
+As in the previous assignment, we mostly referred to the GAIA model for the overall architecture of our solution, and to the Prometheus model for the details, since that is where the focus of the respective design methodologies is. All major components from our GAIA and Prometheus designs could be translated one to one to equivalent structures in Jason. Like in the design, our Jason implementation has two kinds of agents, the matchmaker and a number of traders. The environment contains a database which saves offers and requests, as specified in our GAIA model, and the negotiation works mostly the way we designed it in our Prometheus design. 
 
 \subsection{Data Structures}
 For the traders we had to translate their knowledge about all ongoing negotiations into beliefs. The most important ones are the following:
@@ -44,6 +44,7 @@ at least MinPrice. The equivalent for the buyer is \texttt{requests(Product,MaxP
 \item \texttt{sold(Product)} This product has been sold, requests concerning it will be
 rejected. The equivalent for the buyer is \texttt{bought(Product)}.
 \end{itemize}
+\noident These data structures work fine for us, although it would have been nice to have more complex structures like records in some cases. That way, one could have saved all information concerning a negotiation with one partner in one object, instead of having several unconnected beliefs which together make up a conversation. 
 
 \noindent The backing Java structures (\texttt{ItemDB} and \texttt{ItemDescriptor}) could be reused almost entirely. We only switched from describing items as a set of key-value-pairs of attributes to simply a list of attributes because this could easily be represented in AgentSpeak using arrays. This also reduced the complexity of the configuration files and finding buyers and sellers for matching items in the \texttt{ItemDB}. Since pattern matching using the complete list of attributes for an item is performed, the UUID for each item descriptor was not necessary anymore to uniquely identify an item that is being negotiated.
 
@@ -59,7 +60,7 @@ We also had to make some compromises due to Jason's event based handling of goal
 
 
 \subsection{Changes to Design}
-
+Since our negotiation algorithm was slightly underspecified in the original design, we reused the algorithm from our JADE implementation: If several partners compete for one product, the seller will always make a new offer to the partner with the lowest previous offer (and the other way round). Both buyers and sellers move twenty percent closer to their respective minimal/maximal price with each offer, until either the difference between two offers becomes less than 10 cent, or their own next offer would be worse than the partner's last offer. When one of these cases is reached, they accept the incoming offer if it is within their price limits and reject it otherwise.
 
 \section{Notes}
 
