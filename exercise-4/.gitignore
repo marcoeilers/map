@@ -1,0 +1,8 @@
+*.class
+bin/
+
+# Latex byproducts #
+assignment-4.pdf
+assignment-4.log
+assignment-4.aux
+assignment-4.fdb_latexmk
