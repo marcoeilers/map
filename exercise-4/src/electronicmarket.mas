@@ -1,0 +1,7 @@
+<apaplmas>
+  <environment name="env" file="electronicmarketenv.jar"/>
+  <agent name="matchmaker" file="matchmaker.2apl"/>
+  <agent name="buyer" file="trader.2apl"/>
+  <agent name="seller" file="trader.2apl"/>
+  <agent name="trader" file="trader.2apl"/>
+</apaplmas>
