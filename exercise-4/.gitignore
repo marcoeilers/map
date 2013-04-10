@@ -1,6 +1,9 @@
 *.class
 bin/
 
+.classpath
+.project
+
 # Latex byproducts #
 assignment-4.pdf
 assignment-4.log
