@@ -12,9 +12,11 @@ PC-rules:
   	@env( removeRequest( Trader,Request ), _ )
   	
   message(Trader,request,_,_,getBuyers(Offer,Trader)) <- true |
-  	@env( getBuyers( Trader,Offer ), Buyers);
+  	@env( getBuyers( Trader,Offer ), BuyersResult);
+  	B(BuyersResult = [actionresult(Buyers)]);
   	send( Trader,inform,setBuyers( Offer,Buyers ) )
   	
   message(Trader,request,_,_,getSellers(Request,Trader)) <- true |
-  	@env( getSellers( Trader,Request ), Sellers);
+  	@env( getSellers( Trader,Request ), SellersResult);
+  	B(SellersResult = [actionresult(Sellers)]);
   	send( Trader,inform,setSellers( Request,Sellers ) )  	
