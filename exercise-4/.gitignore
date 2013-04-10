@@ -1,6 +1,6 @@
 *.class
 bin/
-electronicmarketenv.jar
+#electronicmarketenv.jar
 
 .classpath
 .project
