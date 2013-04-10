@@ -2,6 +2,8 @@
  * This is an example model for a new 2APL project
  */
 BeliefUpdates:
+	{true} SetBuying(Product) {buying(Product)}
+	{true} SetSelling(Product) {selling(Product)}
 	{true} DoPushup(S, X) { not count(S), count(S+X) }
 	{not respondTo(Product,Anyone)} AddRespondTo(Product,Partner) {respondTo(Product,[Partner])}
 	{respondTo(Product,Current)} AddRespondTo(Product,Partner) {not respondTo(Product,Current), respondTo(Product,[Partner|Current])}
@@ -79,27 +81,36 @@ removeFromList([Someone|Rest],Partner,[Someone|Result]) :-
  
 empty([]).
 
+wantsToSell(rabbit,20).
 
-Plans:
-  {
-  @env( sayHello(), _ )
-  }
 
 Goals:
-	sold(rabbit,20)
+	addGoals(all)
+
+
 PG-rules:
-	sold(Product,Price) <- true | {
+	addGoals(all) <- wantsToSell(Product,Price) and not selling(Product) |
+	if G(sold(Product,Price)) then skip
+	                          else adoptz(sold(Product,Price))
+
+	addGoals(all) <- wantsToBuy(Product,Price) and not buying(Product) |
+	if G(bought(Product,Price)) then skip
+	                          else adoptz(bought(Product,Price))
+
+	sold(Product,Price) <- not selling(Product) | {
+		SetSelling(Product);
 		SetWaitingFor(Product,null);
 		B(name(Me));
 		send(matchmaker,inform,registerOffer(Product,Me));
-		send(matchmaker,request,getBuyers(Product,Me))
+		send(matchmaker,request,getBuyers(Product,Me))		
 	}
 	
-	bought(Product,Price) <- true | {
+	bought(Product,Price) <- not buying(Product) | {
+		SetBuying(Product);
 		SetWaitingFor(Product,null);
 		B(name(Me));
 		send(matchmaker,inform,registerRequest(Product,Me));
-		send(matchmaker,request,getSellers(Product,Me))
+		send(matchmaker,request,getSellers(Product,Me))		
 	}
 	
 PC-rules:
