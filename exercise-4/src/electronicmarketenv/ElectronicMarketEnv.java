@@ -34,12 +34,12 @@ public class ElectronicMarketEnv extends Environment {
 
 	@Override
 	protected void addAgent(String agent) {
-		logger.info("Adding " + agent);
+		logger.info("Adding agent " + agent);
 	}
 
 	@Override
 	protected void removeAgent(String agent) {
-		logger.info("Removing " + agent);
+		logger.info("Removing agent " + agent);
 	}
 
 	/* --- External Actions --- */
@@ -121,8 +121,11 @@ public class ElectronicMarketEnv extends Environment {
 	public Term getBuyers(String matchmaker, APLIdent agent, APLList offer)
 			throws ExternalActionFailedException {
 		checkInvokingAgentIsMatchmaker(matchmaker);
-		return wrapStringList(itemDB.getBuyers(ItemDescriptor
+		APLList buyers = wrapStringList(itemDB.getBuyers(ItemDescriptor
 				.fromAPLList(offer)));
+		logger.info("Agent " + agent + " got " + buyers
+				+ " as buyers for his offer " + offer);
+		return buyers;
 	}
 
 	/**
@@ -137,8 +140,11 @@ public class ElectronicMarketEnv extends Environment {
 	public Term getSellers(String matchmaker, APLIdent agent, APLList request)
 			throws ExternalActionFailedException {
 		checkInvokingAgentIsMatchmaker(matchmaker);
-		return wrapStringList(itemDB.getSellers(ItemDescriptor
+		APLList sellers = wrapStringList(itemDB.getSellers(ItemDescriptor
 				.fromAPLList(request)));
+		logger.info("Agent " + agent + " got " + sellers
+				+ " as sellers for his request " + request);
+		return sellers;
 	}
 
 	/**
