@@ -1,5 +1,101 @@
+/*
+ * This is an example model for a new 2APL project
+ */
+BeliefUpdates:
+	{true} DoPushup(S, X) { not count(S), count(S+X) }
+	{not respondTo(Product,Anyone)} AddRespondTo(Product,Partner) {respondTo(Product,[Partner])}
+	{respondTo(Product,Current)} AddRespondTo(Product,Partner) {not respondTo(Product,Current), respondTo(Product,[Partner|Current])}
+	{not respondTo(Product,Anyone)} RemoveRespondTo(Product,Partner) {respondTo(Product,[])}
+	{respondTo(Product,List) and removeFromList(List,Partner,NewList)} RemoveRespondTo(Product,Partner) {not respondTo(Product,List), respondTo(Product,NewList)}
+	{not waitingFor(Product,Anyone)} AddWaitingFor(Product,Partner) {waitingFor(Product,Partner)}
+	{true} SetSales(Product,Buyers) {sales(Product,Buyers)}
+Beliefs:
+truth(1).
+
+findBestSale(Product,Best) :- sales(Product,Buyers) , bestSale(Product,Buyers,null,0,Best).
+
+bestSale(Product,[],BestBuyer,BestPrice,BestBuyer) :- truth(T).
+
+bestSale(Product,[First|Rest],BestBuyer,BestPrice,Best) :-
+ lastPrice(Product,First,LastPrice) ,
+ LastPrice > BestPrice ,
+ bestSale(Product,Rest,First,LastPrice,Best).
+ 
+bestSale(Product,[First|Rest],BestBuyer,BestPrice,Best) :-
+ lastPrice(Product,First,LastPrice) ,
+ LastPrice < BestPrice,
+ bestSale(Product,Rest,BestBuyer,BestPrice,Best).
+ 
+bestSale(Product,[First|Rest],BestBuyer,BestPrice,Best) :-
+ lastPrice(Product,First,LastPrice) ,
+ LastPrice = BestPrice,
+ bestSale(Product,Rest,BestBuyer,BestPrice,Best).
+ 
+findBestNegotiation(Product,Best) :- 
+ negotiations(Product,Sellers) ,
+ bestNegotiation(Product,Sellers,null,1000000,Best).
+ 
+bestNegotiation(Product,[],BestSeller,BestPrice,BestSeller):- truth(T).
+
+bestNegotiation(Product,[First|Rest],BestSeller,BestPrice,Best) :-
+ lastPrice(Product,First,LastPrice) ,
+ LastPrice < BestPrice ,
+ bestNegotiation(Product,Rest,First,LastPrice,Best).
+ 
+bestNegotiation(Product,[First|Rest],BestSeller,BestPrice,Best) :-
+ lastPrice(Product,First,LastPrice) ,
+ LastPrice > BestPrice ,
+ bestNegotiation(Product,Rest,BestSeller,BestPrice,Best).
+ 
+bestNegotiation(Product,[First|Rest],BestSeller,BestPrice,Best) :-
+ lastPrice(Product,First,LastPrice) ,
+ LastPrice = BestPrice ,
+ bestNegotiation(Product,Rest,BestSeller,BestPrice,Best).
+ 
+removeFromList([],_,[]).
+ 
+removeFromList([Partner|Rest],Partner,Result) :-
+ removeFromList(Rest,Partner,Result).
+ 
+removeFromList([Someone|Rest],Partner,[Someone|Result]) :-
+ removeFromList(Rest,Partner,Result).
+ 
+empty([]).
 
 Plans:
   {
-  @env( sayHello(), _ );
+  @env( sayHello(), _ )
   }
+ 
+
+Goals:
+	sold(rabbit,20)
+PG-rules:
+	sold(Product,Price) <- true | {
+		[AddWaitingFor(Product,null);
+		B(name(Me));
+		send(matchmaker,inform,registerOffer(Product,Me));
+		send(matchmaker,request,getBuyers(Product,Me))]
+	}
+	
+PC-rules:
+	message(Partner,inform,setBuyers(Product,Buyers)) <- empty(Buyers) |
+	skip
+	
+	message(Partner,inform,setBuyers(Product,Buyers)) <- not empty(Buyers) |
+	[SetSales(Product,Buyers);
+	setupSales(Product,Buyers)]
+	
+	setupSales(Product,[First|Rest]) <- true |
+	[G(sold(Product,Price));
+	SetLastPrice(Product,First,Price * 2);
+	setupSales(Product,Rest)]
+
+	setupSales(Product,[]) <- true |
+	[B(findBestSale(Product,Best));
+	makeSaleOffer(Product,Best)]
+	
+	makeSaleOffer(Product,Buyer,1) <- lastPrice(Product,Buyer,_) and not initialSent(Product,Buyer) |
+	skip
+	
+
