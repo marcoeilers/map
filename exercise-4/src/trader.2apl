@@ -189,7 +189,7 @@ PC-rules:
 	     removeOffer(Product,List);
 	     send(Buyer,inform,handleAcceptBuy(Product,Me,Price));
 	     send(matchmaker,inform,removeOffer(Product,Me));
-	     print("sold something");
+	     print(sold(Product,to,Buyer,for,Price));
 	     SetSold(Product,MinPrice)]
 	
 	removeOffer(Product,[]) <- true |
@@ -225,7 +225,7 @@ PC-rules:
 	B(name(Me));
 	send(matchmaker,inform,removeOffer(Product,Me));
 	G(sold(Product,MinPrice));
-	print("sold something");
+	print(sold(Product,to,Buyer,for,Price));
 	SetSold(Product,MinPrice)]
 	
 	message(Buyer,inform,_,_,handleRejectSale(Product,Buyer)) <- true |
@@ -317,7 +317,7 @@ PC-rules:
 	     removeRequest(Product,List);
 	     send(Seller,inform,handleAcceptSale(Product,Me,Price));
 	     send(matchmaker,inform,removeRequest(Product,Me));
-	     print("Bought something");
+	     print(bought(Product,from,Seller,for,Price));
 	     SetBought(Product,MaxPrice)]
 	
 	removeRequest(Product,[]) <- true |
@@ -353,7 +353,7 @@ PC-rules:
 	B(name(Me));
 	send(matchmaker,inform,removeRequest(Product,Me));
 	G(bought(Product,MaxPrice));
-	print("bought something");
+	print(bought(Product,from,Seller,for,Price));
 	SetBought(Product,MaxPrice)]
 	
 	message(Buyer,inform,_,_,handleRejectBuy(Product,Seller)) <- true |
