@@ -27,8 +27,6 @@ BeliefUpdates:
 	{true} SetSold(Product,Price) {sold(Product,Price)}
 
 Beliefs:
-name(todo).
-
 truth(1).
 
 findBestSale(Product,Best) :- sales(Product,Buyers) , bestSale(Product,Buyers,null,0,Best).
@@ -80,9 +78,6 @@ removeFromList([Someone|Rest],Partner,[Someone|Result]) :-
  removeFromList(Rest,Partner,Result).
  
 empty([]).
-
-wantsToSell(rabbit,20).
-
 
 Goals:
 	addGoals(all)
