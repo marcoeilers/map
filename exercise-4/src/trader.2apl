@@ -29,8 +29,8 @@ BeliefUpdates:
 Beliefs:
 
 truth(1).
-stepFactor(0.3).
-minStep(0.1).
+stepFactor(0.5).
+minStep(0.5).
 
 findBestSale(Product,Best) :- sales(Product,Buyers) , bestSale(Product,Buyers,null,0,Best).
 
@@ -121,7 +121,7 @@ PC-rules:
 	
 	setupSales(Product,[First|Rest]) <- true |
 	[G(sold(Product,Price));
-	SetLastPrice(Product,First,Price * 2);
+	SetLastPrice(Product,First,Price * 2.0);
 	setupSales(Product,Rest)]
 
 	setupSales(Product,[]) <- true |
@@ -159,7 +159,7 @@ PC-rules:
 	
 	message(Partner,request,_,_,reactToSaleOffer(Product,Buyer,Price,1)) <- not lastPrice(Product,Buyer,_) |
 	[G(sold(Product,MinPrice));
-	SetLastPrice(Product,Buyer,2*MinPrice);
+	SetLastPrice(Product,Buyer,2.0 * MinPrice);
 	AddSale(Product,Buyer);
 	respondToSaleOffer(Product,Buyer,Price)]
 	
@@ -189,6 +189,7 @@ PC-rules:
 	     removeOffer(Product,List);
 	     send(Buyer,inform,handleAcceptBuy(Product,Me,Price));
 	     send(matchmaker,inform,removeOffer(Product,Me));
+	     print("sold something");
 	     SetSold(Product,MinPrice)]
 	
 	removeOffer(Product,[]) <- true |
@@ -224,6 +225,7 @@ PC-rules:
 	B(name(Me));
 	send(matchmaker,inform,removeOffer(Product,Me));
 	G(sold(Product,MinPrice));
+	print("sold something");
 	SetSold(Product,MinPrice)]
 	
 	message(Buyer,inform,_,_,handleRejectSale(Product,Buyer)) <- true |
@@ -304,8 +306,8 @@ PC-rules:
               G(bought(Product,MaxPrice));
               SetLastPrice(Product,Seller,OldPrice + ((MaxPrice-OldPrice)*StepFactor));
               RemoveRespondTo(Product,Seller);
-	      send(Seller,request,reactToSaleOffer(Product,Me,OldPrice + ((MaxPrice-OldPrice)*StepFactor),false))]
-	 else if B(Price < MinPrice)
+	      send(Seller,request,reactToSaleOffer(Product,Me,OldPrice + ((MaxPrice-OldPrice)*StepFactor),0))]
+	 else if B(Price > MaxPrice)
 	   then [rejectBuyOffer(Product,Seller);
 	     initiateNewRoundBuy(Product)]
 	   else [B(name(Me));
@@ -315,6 +317,7 @@ PC-rules:
 	     removeRequest(Product,List);
 	     send(Seller,inform,handleAcceptSale(Product,Me,Price));
 	     send(matchmaker,inform,removeRequest(Product,Me));
+	     print("Bought something");
 	     SetBought(Product,MaxPrice)]
 	
 	removeRequest(Product,[]) <- true |
@@ -350,6 +353,7 @@ PC-rules:
 	B(name(Me));
 	send(matchmaker,inform,removeRequest(Product,Me));
 	G(bought(Product,MaxPrice));
+	print("bought something");
 	SetBought(Product,MaxPrice)]
 	
 	message(Buyer,inform,_,_,handleRejectBuy(Product,Seller)) <- true |
