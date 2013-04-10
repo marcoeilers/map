@@ -82,9 +82,6 @@ removeFromList([Someone|Rest],Partner,[Someone|Result]) :-
  
 empty([]).
 
-wantsToSell(rabbit,20).
-
-
 Goals:
 	addGoals(all)
 
