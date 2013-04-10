@@ -1,20 +1,20 @@
 PC-rules:
-  message(Trader,_,inform,_,_,registerOffer(Offer,Trader)) <- true |
+  message(Trader,inform,_,_,registerOffer(Offer,Trader)) <- true |
   	@env( addOffer( Trader,Offer ), _ )
   
-  message(Trader,_,inform,_,_,removeOffer(Offer,Trader)) <- true |
+  message(Trader,inform,_,_,removeOffer(Offer,Trader)) <- true |
   	@env( removeOffer( Trader,Offer ), _ )
   	
-  message(Trader,_,inform,_,_,registerRequest(Request,Trader)) <- true |
+  message(Trader,inform,_,_,registerRequest(Request,Trader)) <- true |
   	@env( addRequest( Trader,Request ), _ )
   
-  message(Trader,_,inform,_,_,removeRequest(Request,Trader)) <- true |
+  message(Trader,inform,_,_,removeRequest(Request,Trader)) <- true |
   	@env( removeRequest( Trader,Request ), _ )
   	
-  message(Trader,_,request,_,_,getBuyers(Offer,Trader)) <- true |
+  message(Trader,request,_,_,getBuyers(Offer,Trader)) <- true |
   	@env( getBuyers( Trader,Offer ), Buyers);
   	send( Trader,inform,setBuyers( Offer,Buyers ) )
   	
-  message(Trader,_,request,_,_,getSellers(Request,Trader)) <- true |
+  message(Trader,request,_,_,getSellers(Request,Trader)) <- true |
   	@env( getSellers( Trader,Request ), Sellers);
   	send( Trader,inform,setSellers( Request,Sellers ) )  	
