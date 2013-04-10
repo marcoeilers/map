@@ -1,5 +1,2 @@
-
 Plans:
-  {
-  @env( sayHello(), _ );
-  }
+  @env( sayHello(), _ )
