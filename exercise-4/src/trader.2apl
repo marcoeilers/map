@@ -109,10 +109,10 @@ PG-rules:
 	}
 	
 PC-rules:
-	message(Partner,inform,setBuyers(Product,Buyers)) <- empty(Buyers) |
+	message(Partner,_,inform,_,_,setBuyers(Product,Buyers)) <- empty(Buyers) |
 	skip
 	
-	message(Partner,inform,setBuyers(Product,Buyers)) <- not empty(Buyers) |
+	message(Partner,_,inform,_,_,setBuyers(Product,Buyers)) <- not empty(Buyers) |
 	[SetSales(Product,Buyers);
 	setupSales(Product,Buyers)]
 	
@@ -151,19 +151,19 @@ PC-rules:
 	RemoveRespondTo(Product,Buyer);
 	send(Buyer,request,reactToBuyOffer(Product,Me,OldPrice - ((OldPrice-MinPrice) * StepFactor),0))]
 	
-	message(Partner,request,reactToSaleOffer(Product,Buyer,_,_)) <- sold(Product) |
+	message(Partner,_,request,_,_,reactToSaleOffer(Product,Buyer,_,_)) <- sold(Product) |
 	rejectSaleOffer(Product,Buyer)
 	
-	message(Partner,request,reactToSaleOffer(Product,Buyer,Price,1)) <- not lastPrice(Product,Buyer,_) |
+	message(Partner,_,request,_,_,reactToSaleOffer(Product,Buyer,Price,1)) <- not lastPrice(Product,Buyer,_) |
 	[G(sold(Product,MinPrice));
 	SetLastPrice(Product,Buyer,2*MinPrice);
 	AddSale(Product,Buyer);
 	respondToSaleOffer(Product,Buyer,Price)]
 	
-	message(Partner,request,reactToSaleOffer(Product,Buyer,Price,Initial)) <- not waitingFor(Product,Buyer) and not waitingFor(Product,null) |
+	message(Partner,_,request,_,_,reactToSaleOffer(Product,Buyer,Price,Initial)) <- not waitingFor(Product,Buyer) and not waitingFor(Product,null) |
 	AddRespondTo(Product,Buyer)
 	
-	message(Partner,request,reactToSaleOffer(Product,Buyer,Price,Initial)) <- lastPrice(Product,Buyer,_) |
+	message(Partner,_,request,_,_,reactToSaleOffer(Product,Buyer,Price,Initial)) <- lastPrice(Product,Buyer,_) |
 	respondToSaleOffer(Product,Buyer,Price)
 
 	respondToSaleOffer(Product,Buyer,Price) <- not waitingFor(Product,Buyer) and not waitingFor(Product,null) |
@@ -213,7 +213,7 @@ PC-rules:
 	initiateNewRoundSale(Product) <- findBestSale(Product,Best) and not initialSent(Product,Best) |
 	makeSaleOffer(Product,Best,1)
 	
-	message(Buyer,inform,handleAcceptSale(Product,Buyer,Price)) <- true |
+	message(Buyer,_,inform,_,_,handleAcceptSale(Product,Buyer,Price)) <- true |
 	[SetWaitingFor(Product,null);
 	RemoveRespondTo(Product,Buyer);
 	B(respondTo(Product,List));
@@ -223,7 +223,7 @@ PC-rules:
 	G(sold(Product,MinPrice));
 	SetSold(Product,MinPrice)]
 	
-	message(Buyer,inform,handleRejectSale(Product,Buyer)) <- true |
+	message(Buyer,_,inform,_,_,handleRejectSale(Product,Buyer)) <- true |
 	[RemoveRespondTo(Product,Buyer);
 	RemoveLastPrice(Product,Buyer);
 	B(sales(Product,Buyers));
@@ -233,10 +233,10 @@ PC-rules:
 	
 	// Buyer
 	
-	message(Partner,inform,setSellers(Product,Sellers)) <- empty(Sellers) |
+	message(Partner,_,inform,_,_,setSellers(Product,Sellers)) <- empty(Sellers) |
 	skip
 	
-	message(Partner,inform,setSellers(Product,Sellers)) <- not empty(Sellers) |
+	message(Partner,_,inform,_,_,setSellers(Product,Sellers)) <- not empty(Sellers) |
 	[SetNegotiations(Product,Sellers);
 	setupNegotiations(Product,Sellers)]
 	
@@ -261,7 +261,7 @@ PC-rules:
 	makeBuyOffer(Product,Seller,1) <- initialSent(Product,Seller) |
 	skip
 	
-	message(Seller,request,reactToBuyOffer(Product,Seller,Price,Initial)) <- true |
+	message(Seller,_,request,_,_,reactToBuyOffer(Product,Seller,Price,Initial)) <- true |
 	reactToBuyOffer(Product,Seller,Price,Initial)
 	
 	reactToBuyOffer(Product,Seller,_,_) <- bought(Product) |
@@ -339,7 +339,7 @@ PC-rules:
 	initiateNewRoundBuy(Product) <- findBestNegotiation(Product,Best) and not initialSent(Product,Best) |
 	makeBuyOffer(Product,Best,1)
 	
-	message(Buyer,inform,handleAcceptBuy(Product,Seller,Price)) <- true |
+	message(Buyer,_,inform,_,_,handleAcceptBuy(Product,Seller,Price)) <- true |
 	[SetWaitingFor(Product,null);
 	RemoveRespondTo(Product,Seller);
 	B(respondTo(Product,List));
@@ -349,7 +349,7 @@ PC-rules:
 	G(bought(Product,MaxPrice));
 	SetBought(Product,MaxPrice)]
 	
-	message(Buyer,inform,handleRejectBuy(Product,Seller)) <- true |
+	message(Buyer,_,inform,_,_,handleRejectBuy(Product,Seller)) <- true |
 	[RemoveRespondTo(Product,Seller);
 	RemoveLastPrice(Product,Seller);
 	B(negotiations(Product,Sellers));
