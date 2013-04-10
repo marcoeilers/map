@@ -7,9 +7,20 @@ BeliefUpdates:
 	{respondTo(Product,Current)} AddRespondTo(Product,Partner) {not respondTo(Product,Current), respondTo(Product,[Partner|Current])}
 	{not respondTo(Product,Anyone)} RemoveRespondTo(Product,Partner) {respondTo(Product,[])}
 	{respondTo(Product,List) and removeFromList(List,Partner,NewList)} RemoveRespondTo(Product,Partner) {not respondTo(Product,List), respondTo(Product,NewList)}
-	{not waitingFor(Product,Anyone)} AddWaitingFor(Product,Partner) {waitingFor(Product,Partner)}
-	{true} SetSales(Product,Buyers) {sales(Product,Buyers)}
+	{not waitingFor(Product,Anyone)} SetWaitingFor(Product,Partner) {waitingFor(Product,Partner)}
+	{waitingFor(Product,Someone)} SetWaitingFor(Product,Partner) {not waitingFor(Product,Someone), waitingFor(Product,Partner)}
+	{not sales(Product,Whatever)} SetSales(Product,Buyers) {sales(Product,Buyers)}
+	{sales(Product,Whatever)} SetSales(Product,Buyers) {not sales(Product,Whatever), sales(Product,Buyers)}
+	{lastPrice(Product,Partner,Last)} SetLastPrice(Product,Partner,New) {not lastPrice(Product,Partner,Last), lastPrice(Product,Partner,New)}
+	{not lastPrice(Product,Partner,Last)} SetLastPrice(Product,Partner,New) {lastPrice(Product,Partner,New)}
+	{true} SetInitialSent(Product,Partner) {initialSent(Product,Partner)}
+	{not sales(Product,Anything)} AddSale(Product,Buyer) {sales(Product,[Buyer])}
+	{sales(Product,Something)} AddSale(Product,Buyer) {not sales(Product,Something), sales(Product,[Buyer| Something])}
+	{lastPrice(Product,Buyer,Price)}RemoveLastPrice(Product,Buyer) {not lastPrice(Product,Buyer,Price)}
+
 Beliefs:
+name(todo).
+
 truth(1).
 
 findBestSale(Product,Best) :- sales(Product,Buyers) , bestSale(Product,Buyers,null,0,Best).
@@ -62,6 +73,7 @@ removeFromList([Someone|Rest],Partner,[Someone|Result]) :-
  
 empty([]).
 
+
 Plans:
   @env( sayHello(), _ )
 
@@ -69,7 +81,7 @@ Goals:
 	sold(rabbit,20)
 PG-rules:
 	sold(Product,Price) <- true | {
-		[AddWaitingFor(Product,null);
+		[SetWaitingFor(Product,null);
 		B(name(Me));
 		send(matchmaker,inform,registerOffer(Product,Me));
 		send(matchmaker,request,getBuyers(Product,Me))]
@@ -90,7 +102,113 @@ PC-rules:
 
 	setupSales(Product,[]) <- true |
 	[B(findBestSale(Product,Best));
-	makeSaleOffer(Product,Best)]
+	makeSaleOffer(Product,Best,1)]
 	
 	makeSaleOffer(Product,Buyer,1) <- lastPrice(Product,Buyer,_) and not initialSent(Product,Buyer) |
+	[SetWaitingFor(Product,Buyer);
+	B(name(Me));
+	B(lastPrice(Product,Buyer,OldPrice));
+	G(sold(Product,MinPrice));
+	SetInitialSent(Product,Buyer);
+	RemoveRespondTo(Product,Buyer);
+	send(Buyer,request,reactToBuyOffer(Product,Me,OldPrice,1))]
+	
+	makeSaleOffer(Product,Buyer,1) <- lastPrice(Product,Buyer,_) and initialSent(Product,Buyer) |
 	skip
+	
+	makeSaleOffer(Product,Buyer,0) <- not waitingFor(Product,Buyer) and not waitingFor(Product,null) |
+	AddRespondTo(Product,Buyer)
+	
+	makeSaleOffer(Product,Buyer,0) <- true |
+	[SetWaitingFor(Product,Buyer);
+	B(name(Me));
+	B(lastPrice(Product,Buyer,OldPrice));
+	G(sold(Product,MinPrice));
+	SetInitialSent(Product,Buyer);
+	B(stepFactor(StepFactor));
+	SetLastPrice(Product,Buyer,OldPrice - ((OldPrice-MinPrice)*StepFactor));
+	RemoveRespondTo(Product,Buyer);
+	send(Buyer,request,reactToBuyOffer(Product,Me,OldPrice - ((OldPrice-MinPrice) * StepFactor),0))]
+	
+	message(Partner,request,reactToSaleOffer(Product,Buyer,_,_)) <- sold(Product) |
+	rejectSaleOffer(Product,Buyer)
+	
+	message(Partner,request,reactToSaleOffer(Product,Buyer,Price,1)) <- not lastPrice(Product,Buyer,_) |
+	[G(sold(Product,MinPrice));
+	SetLastPrice(Product,Buyer,2*MinPrice);
+	AddSale(Product,Buyer);
+	respondToSaleOffer(Product,Buyer,Price)]
+	
+	message(Partner,request,reactToSaleOffer(Product,Buyer,Price,Initial)) <- not waitingFor(Product,Buyer) and not waitingFor(Product,null) |
+	AddRespondTo(Product,Buyer)
+	
+	message(Partner,request,reactToSaleOffer(Product,Buyer,Price,Initial)) <- lastPrice(Product,Buyer,_) |
+	respondToSaleOffer(Product,Buyer,Price)
+	
+	respondToSaleOffer(Product,Buyer,Price) <- findBestSale(Product,Best) 
+	           and lastPrice(Product,Best,LastPrice)
+	           and stepFactor(StepFactor) 
+	           and minStep(MinStep) |
+	G(sold(Product,MinPrice));
+	if B(((LastPrice - MinPrice) * StepFactor) > MinStep) & B((LastPrice - ((LastPrice - MinPrice)*StepFactor)) > Price)
+	 then makeSaleOffer(Product,Buyer,0)
+	 else if B(Price < MinPrice)
+	   then [rejectSaleOffer(Product,Buyer);
+	     initiateNewRoundSale(Product)]
+	   else [B(name(Me));
+	     SetWaitingFor(Product,null);
+	     RemoveRespondTo(Product,Buyer);
+	     B(respondTo(Product,List));
+	     removeOffer(Product,List);
+	     send(Buyer,inform,handleAcceptBuy(Product,Me,Price));
+	     send(matchmaker,inform,removeOffer(Product,Me));
+	     SetSold(Product,MinPrice)]
+	
+	removeOffer(Product,[]) <- true |
+	skip
+	
+	removeOffer(Product,[First|Rest]) <- true |
+	[rejectSaleOffer(Product,First);
+	removeOffer(Product,Rest)]
+	
+	rejectSaleOffer(Product,Buyer) <- true |
+	[B(name(Me));
+	RemoveRespondTo(Product,Buyer);
+	RemoveLastPrice(Product,Buyer);
+	B(sales(Product,Buyers));
+	B(removeFromList(Buyers,Buyer,NewList));
+	SetSales(Product,NewList);
+	send(Buyer,inform,handleRejectBuy(Product,Me))]
+	
+	initiateNewRoundSale(Product) <- findBestSale(Product,null) |
+	skip
+	
+	initiateNewRoundSale(Product) <- findBestSale(Product,Best) and initialSent(Product,Best) |
+	makeSaleOffer(Product,Best,0)
+	
+	initiateNewRoundSale(Product) <- findBestSale(Product,Best) and not initialSent(Product,Best) |
+	makeSaleOffer(Product,Best,1)
+	
+	message(Buyer,inform,handleAcceptSale(Product,Buyer,Price)) <- true |
+	[RemoveRespondTo(Product,Buyer);
+	RemoveLastPrice(Product,Buyer);
+	B(sales(Product,Buyers));
+	B(removeFromList(Buyers,Buyer,NewList));
+	SetSales(Product,NewList);
+	initiateNewRoundSale(Product)]
+	
+	message(Buyer,inform,handleRejectSale(Product,Buyer)) <- true |
+	[RemoveRespondTo(Product,Buyer);
+	RemoveLastPrice(Product,Buyer);
+	B(sales(Product,Buyers));
+	B(removeFromList(Buyers,Buyer,NewList));
+	SetSales(Product,NewList);
+	initiateNewRoundSale(Product)]
+	            
+	
+	
+	
+	
+	
+	
+
