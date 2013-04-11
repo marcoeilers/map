@@ -148,6 +148,32 @@ public class ElectronicMarketEnv extends Environment {
 	}
 
 	/**
+	 * Prints the argument list separated by whitespace.
+	 * 
+	 * @param agent
+	 * @param args
+	 * @return
+	 * @throws ExternalActionFailedException
+	 */
+	public Term printList(String agent, APLList args)
+			throws ExternalActionFailedException {
+		StringBuilder sb = new StringBuilder();
+		sb.append(agent);
+		sb.append(": ");
+
+		String separator = "";
+		Term head = null;
+		while (args != null && (head = args.getHead()) != null) {
+			sb.append(separator);
+			sb.append(head.toString());
+			args = (APLList) args.getTail();
+			separator = " ";
+		}
+		logger.info(sb.toString());
+		return wrapBoolean(true);
+	}
+
+	/**
 	 * Dummy action that simply prints hello to the logger.
 	 * 
 	 * @param agent
