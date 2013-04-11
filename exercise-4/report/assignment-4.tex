@@ -32,6 +32,12 @@
 
 \subsection{Data Structures}
 
+The backing Java structures (\texttt{ItemDB} and \texttt{ItemDescriptor}) could be reused from the Jade assignment almost entirely, that is we only switched from describing items as a set of key-value-pairs of attributes to simply a list of attributes because this could easily be represented in 2APL using lists. This also reduced the complexity of the configuration files and finding buyers and sellers for matching items in the \texttt{ItemDB}. Since pattern matching using the complete list of attributes for an item is performed, the UUID for each item descriptor was not necessary anymore to uniquely identify an item that is being negotiated. Furthermore, we adapted the conversion mechanisms to and from \texttt{APLList}s when passing items to and from the environment.
+
+The \texttt{ItemDB} is the only part of a custom environment, \texttt{ElectronicMarketEnv}. Figuring out the correct way to implement the environmental class was a little more complicated than in the previous assignments because the manual is only very vague in what class/interface should be extended/implemented. The documentation of the EIS was more helpful in this case, but we ended up disassembling the \texttt{blockworld.jar} example file (because of missing sources) and analyzed the byte code to find out what class should be used as a base class for our custom environment (the \texttt{apapl.Environment} class is fully functional, contrary to the \texttt{eis.EIDefaultImpl} class). Furthermore, the generation of the \texttt{MANIFEST.MF} file and the exhaustive inclusion of dependencies in the environment \texttt{.jar}-file were not straightforward since special export mechanisms and build path settings had to be used. The environment is used only by the matchmaker agent by means of non-internal actions. The matchmaker itself only mitigates between trader agents and the \texttt{ItemDB}.
+
+Since there is no way of defining a common agent Java base class that would be able to parse initial requests and offers and add them to the goal base of each trading agent we used the possibility of including beliefs with each agent in the \texttt{.mas} file by means of \texttt{<beliefs ... />} tags. These initial beliefs are then added as buy-/sell-goals by the initial goal \texttt{addGoals}. Note that we shipped the same set of offers and requests as in the previous exercise.
+
 \subsection{Ease of Implementation}
 
 \subsection{Changes to Design}
