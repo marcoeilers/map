@@ -1,7 +1,8 @@
 /*
- * This is an example model for a new 2APL project
+ * Implementation of a trader, which can both buy and sell products
  */
 BeliefUpdates:
+ // rules for manipulating beliefs
  {true} SetBuying(Product) {buying(Product)}
  {true} SetSelling(Product) {selling(Product)}
  {not respondTo(Product,Anyone)} AddRespondTo(Product,Partner) {respondTo(Product,[Partner])}
@@ -26,11 +27,12 @@ BeliefUpdates:
  {true} SetSold(Product,Price) {sold(Product,Price)}
 
 Beliefs:
-
+ // constants
  truth(1).
  stepFactor(0.5).
  minStep(0.5).
 
+ // rules for finding the partner with the best last offer
  findBestSale(Product,Best) :- 
  sales(Product,Buyers), 
  bestSale(Product,Buyers,null,0,Best).
@@ -73,6 +75,7 @@ Beliefs:
  LastPrice = BestPrice ,
  bestNegotiation(Product,Rest,BestSeller,BestPrice,Best).
  
+ // rule for removing an item from a list
  removeFromList([],_,[]).
  
  removeFromList([Partner|Rest],Partner,Result) :-
@@ -84,10 +87,11 @@ Beliefs:
  empty([]).
 
 Goals:
+ // initial goal: add sold/bought goals for items
  addGoals(all)
 
-
 PG-rules:
+ // rules for adopting new goals
  addGoals(all) <- wantsToSell(Product,Price) and not selling(Product) |
  if G(sold(Product,Price)) then skip
                            else adoptz(sold(Product,Price))
@@ -96,6 +100,7 @@ PG-rules:
  if G(bought(Product,Price)) then skip
                       else adoptz(bought(Product,Price))
 
+ // register with matchmaker and get potential partners
  sold(Product,Price) <- not selling(Product) | {
  SetSelling(Product);
  SetWaitingFor(Product,null);
@@ -111,9 +116,12 @@ PG-rules:
  send(matchmaker,request,getSellers(Product,Me))}
  
 PC-rules:
+ // matchmaker sent buyers
+ // currently no buyers
  message(Partner,inform,_,_,setBuyers(Product,Buyers)) <- empty(Buyers) |
  @env(printList([currently,no,buyers,for,Product]),_)
  
+ // create initial data structures for each potential buyer
  message(Partner,inform,_,_,setBuyers(Product,Buyers)) <- not empty(Buyers) |
  [SetSales(Product,Buyers);
  setupSales(Product,Buyers)]
@@ -127,6 +135,7 @@ PC-rules:
  [B(findBestSale(Product,Best));
  makeSaleOffer(Product,Best,1)]
  
+ // makes an initial offer
  makeSaleOffer(Product,Buyer,1) <- lastPrice(Product,Buyer,_) and not initialSent(Product,Buyer) |
  [SetWaitingFor(Product,Buyer);
  B(name(Me));
@@ -137,12 +146,16 @@ PC-rules:
  @env(printList([offering,Buyer,to,sell,Product,for,OldPrice]),_);
  send(Buyer,request,reactToBuyOffer(Product,Me,OldPrice,1))]
  
+ // send no initial offer to A because we already responded to a message from A
+ // (avoid duplicate negotiations)
  makeSaleOffer(Product,Buyer,1) <- lastPrice(Product,Buyer,_) and initialSent(Product,Buyer) |
  skip
  
+ // we are waiting for someone else's response, so we cannot send our new offers now
  makeSaleOffer(Product,Buyer,0) <- not waitingFor(Product,Buyer) and not waitingFor(Product,null) |
  AddRespondTo(Product,Buyer)
  
+ // send out an offer
  makeSaleOffer(Product,Buyer,0) <- true |
  [SetWaitingFor(Product,Buyer);
  B(name(Me));
@@ -156,9 +169,13 @@ PC-rules:
  @env(printList([offering,Buyer,to,sell,Product,for,PrintPrice]),_);
  send(Buyer,request,reactToBuyOffer(Product,Me,OldPrice - ((OldPrice-MinPrice) * StepFactor),0))]
  
+ // if someone offers something but we already sold the item
+ // just reject
  message(Partner,request,_,_,reactToSaleOffer(Product,Buyer,_,_)) <- sold(Product) |
  rejectSaleOffer(Product,Buyer)
  
+ // if we get an offer from someone we do not know
+ // create initial data structures
  message(Partner,request,_,_,reactToSaleOffer(Product,Buyer,Price,1)) <- not lastPrice(Product,Buyer,_) |
  [G(sold(Product,MinPrice));
  SetLastPrice(Product,Buyer,2.0 * MinPrice);
@@ -174,17 +191,22 @@ PC-rules:
  respondToSaleOffer(Product,Buyer,Price) <- not waitingFor(Product,Buyer) and not waitingFor(Product,null) |
  AddRespondTo(Product,Buyer)
  
+ // send a response
  respondToSaleOffer(Product,Buyer,Price) <- 
   findBestSale(Product,Best) 
   and lastPrice(Product,Best,LastPrice)
   and stepFactor(StepFactor) 
   and minStep(MinStep) |
  G(sold(Product,MinPrice));
+ // if we can make a counteroffer, do so
  if B(((LastPrice - MinPrice) * StepFactor) > MinStep) & B((LastPrice - ((LastPrice - MinPrice)*StepFactor)) > Price)
   then makeSaleOffer(Product,Buyer,0)
+  // otherwise check if offer is acceptable
   else if B(Price < MinPrice)
+   // if not, reject
    then [rejectSaleOffer(Product,Buyer);
          initiateNewRoundSale(Product)]
+   // otherwise accept
    else [B(name(Me));
          SetWaitingFor(Product,null);
          RemoveRespondTo(Product,Buyer);
@@ -196,6 +218,7 @@ PC-rules:
          @env(printList([sold,Product,to,Buyer,for,Price]),_);
          SetSold(Product,MinPrice)]
  
+ // reject all offers from agents that are waiting for a response
  removeOffer(Product,[]) <- true |
  skip
  
@@ -203,6 +226,7 @@ PC-rules:
  [rejectSaleOffer(Product,First);
  removeOffer(Product,Rest)]
  
+ // rejects an offer
  rejectSaleOffer(Product,Buyer) <- true |
  [B(name(Me));
  RemoveRespondTo(Product,Buyer);
@@ -213,15 +237,19 @@ PC-rules:
  @env(printList([rejecting,sale,offer,from,Buyer,for,Product]),_);
  send(Buyer,inform,handleRejectBuy(Product,Me))]
  
+ // after getting rejected, contact someone else
+ // unless there is noone else
  initiateNewRoundSale(Product) <- findBestSale(Product,null) |
  @env(printList([no,other,buyers,for,Product]),_)
  
+ // mark the offer as initial if we have not yet communicated with the new partner
  initiateNewRoundSale(Product) <- findBestSale(Product,Best) and initialSent(Product,Best) |
  makeSaleOffer(Product,Best,0)
  
  initiateNewRoundSale(Product) <- findBestSale(Product,Best) and not initialSent(Product,Best) |
  makeSaleOffer(Product,Best,1)
  
+ // react to an accept
  message(Buyer,inform,_,_,handleAcceptSale(Product,Buyer,Price)) <- true |
  [SetWaitingFor(Product,null);
  @env(printList([got,accept,from,Buyer,for,Product,for,Price]),_);
@@ -234,6 +262,7 @@ PC-rules:
  @env(printList([sold,Product,to,Buyer,for,Price]),_);
  SetSold(Product,MinPrice)]
  
+ // react to a reject
  message(Buyer,inform,_,_,handleRejectSale(Product,Buyer)) <- true |
  [RemoveRespondTo(Product,Buyer);
  @env(printList([got,reject,from,Buyer,for,Product]),_);
@@ -244,6 +273,7 @@ PC-rules:
  initiateNewRoundSale(Product)]
  
  // Buyer
+ // comments only where differences between buyer and seller
  
  message(Partner,inform,_,_,setSellers(Product,Sellers)) <- empty(Sellers) |
  @env(printList([currently,no,sellers,for,Product]),_)
@@ -280,6 +310,8 @@ PC-rules:
  reactToBuyOffer(Product,Seller,_,_) <- bought(Product) |
  rejectBuyOffer(Product,Seller)
  
+ // the buyer does not react to initial offers if it has already sent an offer to the same agent
+ // again, to avoid duplicate negotiations
  reactToBuyOffer(Product,Seller,Price,1) <- initialSent(Product,Seller) |
  skip
  
