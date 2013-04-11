@@ -2,365 +2,366 @@
  * This is an example model for a new 2APL project
  */
 BeliefUpdates:
-	{true} SetBuying(Product) {buying(Product)}
-	{true} SetSelling(Product) {selling(Product)}
-	{true} DoPushup(S, X) { not count(S), count(S+X) }
-	{not respondTo(Product,Anyone)} AddRespondTo(Product,Partner) {respondTo(Product,[Partner])}
-	{respondTo(Product,Current)} AddRespondTo(Product,Partner) {not respondTo(Product,Current), respondTo(Product,[Partner|Current])}
-	{not respondTo(Product,Anyone)} RemoveRespondTo(Product,Partner) {respondTo(Product,[])}
-	{respondTo(Product,List) and removeFromList(List,Partner,NewList)} RemoveRespondTo(Product,Partner) {not respondTo(Product,List), respondTo(Product,NewList)}
-	{not waitingFor(Product,Anyone)} SetWaitingFor(Product,Partner) {waitingFor(Product,Partner)}
-	{waitingFor(Product,Someone)} SetWaitingFor(Product,Partner) {not waitingFor(Product,Someone), waitingFor(Product,Partner)}
-	{not sales(Product,Whatever)} SetSales(Product,Buyers) {sales(Product,Buyers)}
-	{sales(Product,Whatever)} SetSales(Product,Buyers) {not sales(Product,Whatever), sales(Product,Buyers)}
-	{not negotiations(Product,Whatever)} SetNegotiations(Product,Sellers) {negotiations(Product,Sellers)}
-	{negotiations(Product,Whatever)} SetNegotiations(Product,Sellers) {not negotiations(Product,Whatever), negotiations(Product,Sellers)}
-	{lastPrice(Product,Partner,Last)} SetLastPrice(Product,Partner,New) {not lastPrice(Product,Partner,Last), lastPrice(Product,Partner,New)}
-	{not lastPrice(Product,Partner,Last)} SetLastPrice(Product,Partner,New) {lastPrice(Product,Partner,New)}
-	{true} SetInitialSent(Product,Partner) {initialSent(Product,Partner)}
-	{not sales(Product,Anything)} AddSale(Product,Buyer) {sales(Product,[Buyer])}
-	{sales(Product,Something)} AddSale(Product,Buyer) {not sales(Product,Something), sales(Product,[Buyer| Something])}
-	{not negotiations(Product,Anything)} AddNegotiation(Product,Seller) {negotiations(Product,[Seller])}
-	{negotiations(Product,Something)} AddNegotiation(Product,Seller) {not negotiations(Product,Something), negotiations(Product,[Seller| Something])}
-	{lastPrice(Product,Buyer,Price)}RemoveLastPrice(Product,Buyer) {not lastPrice(Product,Buyer,Price)}
-	{true} SetBought(Product,Price) {bought(Product,Price)}
-	{true} SetSold(Product,Price) {sold(Product,Price)}
+ {true} SetBuying(Product) {buying(Product)}
+ {true} SetSelling(Product) {selling(Product)}
+ {not respondTo(Product,Anyone)} AddRespondTo(Product,Partner) {respondTo(Product,[Partner])}
+ {respondTo(Product,Current)} AddRespondTo(Product,Partner) {not respondTo(Product,Current), respondTo(Product,[Partner|Current])}
+ {not respondTo(Product,Anyone)} RemoveRespondTo(Product,Partner) {respondTo(Product,[])}
+ {respondTo(Product,List) and removeFromList(List,Partner,NewList)} RemoveRespondTo(Product,Partner) {not respondTo(Product,List), respondTo(Product,NewList)}
+ {not waitingFor(Product,Anyone)} SetWaitingFor(Product,Partner) {waitingFor(Product,Partner)}
+ {waitingFor(Product,Someone)} SetWaitingFor(Product,Partner) {not waitingFor(Product,Someone), waitingFor(Product,Partner)}
+ {not sales(Product,Whatever)} SetSales(Product,Buyers) {sales(Product,Buyers)}
+ {sales(Product,Whatever)} SetSales(Product,Buyers) {not sales(Product,Whatever), sales(Product,Buyers)}
+ {not negotiations(Product,Whatever)} SetNegotiations(Product,Sellers) {negotiations(Product,Sellers)}
+ {negotiations(Product,Whatever)} SetNegotiations(Product,Sellers) {not negotiations(Product,Whatever), negotiations(Product,Sellers)}
+ {lastPrice(Product,Partner,Last)} SetLastPrice(Product,Partner,New) {not lastPrice(Product,Partner,Last), lastPrice(Product,Partner,New)}
+ {not lastPrice(Product,Partner,Last)} SetLastPrice(Product,Partner,New) {lastPrice(Product,Partner,New)}
+ {true} SetInitialSent(Product,Partner) {initialSent(Product,Partner)}
+ {not sales(Product,Anything)} AddSale(Product,Buyer) {sales(Product,[Buyer])}
+ {sales(Product,Something)} AddSale(Product,Buyer) {not sales(Product,Something), sales(Product,[Buyer| Something])}
+ {not negotiations(Product,Anything)} AddNegotiation(Product,Seller) {negotiations(Product,[Seller])}
+ {negotiations(Product,Something)} AddNegotiation(Product,Seller) {not negotiations(Product,Something), negotiations(Product,[Seller| Something])}
+ {lastPrice(Product,Buyer,Price)}RemoveLastPrice(Product,Buyer) {not lastPrice(Product,Buyer,Price)}
+ {true} SetBought(Product,Price) {bought(Product,Price)}
+ {true} SetSold(Product,Price) {sold(Product,Price)}
 
 Beliefs:
 
-truth(1).
-stepFactor(0.5).
-minStep(0.5).
+ truth(1).
+ stepFactor(0.5).
+ minStep(0.5).
 
-findBestSale(Product,Best) :- sales(Product,Buyers) , bestSale(Product,Buyers,null,0,Best).
+ findBestSale(Product,Best) :- 
+ sales(Product,Buyers), 
+ bestSale(Product,Buyers,null,0,Best).
 
-bestSale(Product,[],BestBuyer,BestPrice,BestBuyer) :- truth(T).
+ bestSale(Product,[],BestBuyer,BestPrice,BestBuyer) :- truth(T).
 
-bestSale(Product,[First|Rest],BestBuyer,BestPrice,Best) :-
+ bestSale(Product,[First|Rest],BestBuyer,BestPrice,Best) :-
  lastPrice(Product,First,LastPrice) ,
  LastPrice > BestPrice ,
  bestSale(Product,Rest,First,LastPrice,Best).
  
-bestSale(Product,[First|Rest],BestBuyer,BestPrice,Best) :-
+ bestSale(Product,[First|Rest],BestBuyer,BestPrice,Best) :-
  lastPrice(Product,First,LastPrice) ,
  LastPrice < BestPrice,
  bestSale(Product,Rest,BestBuyer,BestPrice,Best).
  
-bestSale(Product,[First|Rest],BestBuyer,BestPrice,Best) :-
+ bestSale(Product,[First|Rest],BestBuyer,BestPrice,Best) :-
  lastPrice(Product,First,LastPrice) ,
  LastPrice = BestPrice,
  bestSale(Product,Rest,BestBuyer,BestPrice,Best).
  
-findBestNegotiation(Product,Best) :- 
+ findBestNegotiation(Product,Best) :- 
  negotiations(Product,Sellers) ,
  bestNegotiation(Product,Sellers,null,1000000,Best).
  
-bestNegotiation(Product,[],BestSeller,BestPrice,BestSeller):- truth(T).
+ bestNegotiation(Product,[],BestSeller,BestPrice,BestSeller):- truth(T).
 
-bestNegotiation(Product,[First|Rest],BestSeller,BestPrice,Best) :-
+ bestNegotiation(Product,[First|Rest],BestSeller,BestPrice,Best) :-
  lastPrice(Product,First,LastPrice) ,
  LastPrice < BestPrice ,
  bestNegotiation(Product,Rest,First,LastPrice,Best).
  
-bestNegotiation(Product,[First|Rest],BestSeller,BestPrice,Best) :-
+ bestNegotiation(Product,[First|Rest],BestSeller,BestPrice,Best) :-
  lastPrice(Product,First,LastPrice) ,
  LastPrice > BestPrice ,
  bestNegotiation(Product,Rest,BestSeller,BestPrice,Best).
  
-bestNegotiation(Product,[First|Rest],BestSeller,BestPrice,Best) :-
+ bestNegotiation(Product,[First|Rest],BestSeller,BestPrice,Best) :-
  lastPrice(Product,First,LastPrice) ,
  LastPrice = BestPrice ,
  bestNegotiation(Product,Rest,BestSeller,BestPrice,Best).
  
-removeFromList([],_,[]).
+ removeFromList([],_,[]).
  
-removeFromList([Partner|Rest],Partner,Result) :-
+ removeFromList([Partner|Rest],Partner,Result) :-
  removeFromList(Rest,Partner,Result).
  
-removeFromList([Someone|Rest],Partner,[Someone|Result]) :-
+ removeFromList([Someone|Rest],Partner,[Someone|Result]) :-
  removeFromList(Rest,Partner,Result).
  
-empty([]).
+ empty([]).
 
 Goals:
-	addGoals(all)
+ addGoals(all)
 
 
 PG-rules:
-	addGoals(all) <- wantsToSell(Product,Price) and not selling(Product) |
-	if G(sold(Product,Price)) then skip
-	                          else adoptz(sold(Product,Price))
+ addGoals(all) <- wantsToSell(Product,Price) and not selling(Product) |
+ if G(sold(Product,Price)) then skip
+                           else adoptz(sold(Product,Price))
 
-	addGoals(all) <- wantsToBuy(Product,Price) and not buying(Product) |
-	if G(bought(Product,Price)) then skip
-	                          else adoptz(bought(Product,Price))
+ addGoals(all) <- wantsToBuy(Product,Price) and not buying(Product) |
+ if G(bought(Product,Price)) then skip
+                      else adoptz(bought(Product,Price))
 
-	sold(Product,Price) <- not selling(Product) | {
-		SetSelling(Product);
-		SetWaitingFor(Product,null);
-		B(name(Me));
-		send(matchmaker,inform,registerOffer(Product,Me));
-		send(matchmaker,request,getBuyers(Product,Me))		
-	}
-	
-	bought(Product,Price) <- not buying(Product) | {
-		SetBuying(Product);
-		SetWaitingFor(Product,null);
-		B(name(Me));
-		send(matchmaker,inform,registerRequest(Product,Me));
-		send(matchmaker,request,getSellers(Product,Me))		
-	}
-	
+ sold(Product,Price) <- not selling(Product) | {
+ SetSelling(Product);
+ SetWaitingFor(Product,null);
+ B(name(Me));
+ send(matchmaker,inform,registerOffer(Product,Me));
+ send(matchmaker,request,getBuyers(Product,Me))}
+ 
+ bought(Product,Price) <- not buying(Product) | {
+ SetBuying(Product);
+ SetWaitingFor(Product,null);
+ B(name(Me));
+ send(matchmaker,inform,registerRequest(Product,Me));
+ send(matchmaker,request,getSellers(Product,Me))}
+ 
 PC-rules:
-	message(Partner,inform,_,_,setBuyers(Product,Buyers)) <- empty(Buyers) |
-	skip
-	
-	message(Partner,inform,_,_,setBuyers(Product,Buyers)) <- not empty(Buyers) |
-	[SetSales(Product,Buyers);
-	setupSales(Product,Buyers)]
-	
-	setupSales(Product,[First|Rest]) <- true |
-	[G(sold(Product,Price));
-	SetLastPrice(Product,First,Price * 2.0);
-	setupSales(Product,Rest)]
+ message(Partner,inform,_,_,setBuyers(Product,Buyers)) <- empty(Buyers) |
+ skip
+ 
+ message(Partner,inform,_,_,setBuyers(Product,Buyers)) <- not empty(Buyers) |
+ [SetSales(Product,Buyers);
+ setupSales(Product,Buyers)]
+ 
+ setupSales(Product,[First|Rest]) <- true |
+ [G(sold(Product,Price));
+ SetLastPrice(Product,First,Price * 2.0);
+ setupSales(Product,Rest)]
 
-	setupSales(Product,[]) <- true |
-	[B(findBestSale(Product,Best));
-	makeSaleOffer(Product,Best,1)]
-	
-	makeSaleOffer(Product,Buyer,1) <- lastPrice(Product,Buyer,_) and not initialSent(Product,Buyer) |
-	[SetWaitingFor(Product,Buyer);
-	B(name(Me));
-	B(lastPrice(Product,Buyer,OldPrice));
-	G(sold(Product,MinPrice));
-	SetInitialSent(Product,Buyer);
-	RemoveRespondTo(Product,Buyer);
-	send(Buyer,request,reactToBuyOffer(Product,Me,OldPrice,1))]
-	
-	makeSaleOffer(Product,Buyer,1) <- lastPrice(Product,Buyer,_) and initialSent(Product,Buyer) |
-	skip
-	
-	makeSaleOffer(Product,Buyer,0) <- not waitingFor(Product,Buyer) and not waitingFor(Product,null) |
-	AddRespondTo(Product,Buyer)
-	
-	makeSaleOffer(Product,Buyer,0) <- true |
-	[SetWaitingFor(Product,Buyer);
-	B(name(Me));
-	B(lastPrice(Product,Buyer,OldPrice));
-	G(sold(Product,MinPrice));
-	SetInitialSent(Product,Buyer);
-	B(stepFactor(StepFactor));
-	SetLastPrice(Product,Buyer,OldPrice - ((OldPrice-MinPrice)*StepFactor));
-	RemoveRespondTo(Product,Buyer);
-	send(Buyer,request,reactToBuyOffer(Product,Me,OldPrice - ((OldPrice-MinPrice) * StepFactor),0))]
-	
-	message(Partner,request,_,_,reactToSaleOffer(Product,Buyer,_,_)) <- sold(Product) |
-	rejectSaleOffer(Product,Buyer)
-	
-	message(Partner,request,_,_,reactToSaleOffer(Product,Buyer,Price,1)) <- not lastPrice(Product,Buyer,_) |
-	[G(sold(Product,MinPrice));
-	SetLastPrice(Product,Buyer,2.0 * MinPrice);
-	AddSale(Product,Buyer);
-	respondToSaleOffer(Product,Buyer,Price)]
-	
-	message(Partner,request,_,_,reactToSaleOffer(Product,Buyer,Price,Initial)) <- not waitingFor(Product,Buyer) and not waitingFor(Product,null) |
-	AddRespondTo(Product,Buyer)
-	
-	message(Partner,request,_,_,reactToSaleOffer(Product,Buyer,Price,Initial)) <- lastPrice(Product,Buyer,_) |
-	respondToSaleOffer(Product,Buyer,Price)
+ setupSales(Product,[]) <- true |
+ [B(findBestSale(Product,Best));
+ makeSaleOffer(Product,Best,1)]
+ 
+ makeSaleOffer(Product,Buyer,1) <- lastPrice(Product,Buyer,_) and not initialSent(Product,Buyer) |
+ [SetWaitingFor(Product,Buyer);
+ B(name(Me));
+ B(lastPrice(Product,Buyer,OldPrice));
+ G(sold(Product,MinPrice));
+ SetInitialSent(Product,Buyer);
+ RemoveRespondTo(Product,Buyer);
+ send(Buyer,request,reactToBuyOffer(Product,Me,OldPrice,1))]
+ 
+ makeSaleOffer(Product,Buyer,1) <- lastPrice(Product,Buyer,_) and initialSent(Product,Buyer) |
+ skip
+ 
+ makeSaleOffer(Product,Buyer,0) <- not waitingFor(Product,Buyer) and not waitingFor(Product,null) |
+ AddRespondTo(Product,Buyer)
+ 
+ makeSaleOffer(Product,Buyer,0) <- true |
+ [SetWaitingFor(Product,Buyer);
+ B(name(Me));
+ B(lastPrice(Product,Buyer,OldPrice));
+ G(sold(Product,MinPrice));
+ SetInitialSent(Product,Buyer);
+ B(stepFactor(StepFactor));
+ SetLastPrice(Product,Buyer,OldPrice - ((OldPrice-MinPrice)*StepFactor));
+ RemoveRespondTo(Product,Buyer);
+ send(Buyer,request,reactToBuyOffer(Product,Me,OldPrice - ((OldPrice-MinPrice) * StepFactor),0))]
+ 
+ message(Partner,request,_,_,reactToSaleOffer(Product,Buyer,_,_)) <- sold(Product) |
+ rejectSaleOffer(Product,Buyer)
+ 
+ message(Partner,request,_,_,reactToSaleOffer(Product,Buyer,Price,1)) <- not lastPrice(Product,Buyer,_) |
+ [G(sold(Product,MinPrice));
+ SetLastPrice(Product,Buyer,2.0 * MinPrice);
+ AddSale(Product,Buyer);
+ respondToSaleOffer(Product,Buyer,Price)]
+ 
+ message(Partner,request,_,_,reactToSaleOffer(Product,Buyer,Price,Initial)) <- not waitingFor(Product,Buyer) and not waitingFor(Product,null) |
+ AddRespondTo(Product,Buyer)
+ 
+ message(Partner,request,_,_,reactToSaleOffer(Product,Buyer,Price,Initial)) <- lastPrice(Product,Buyer,_) |
+ respondToSaleOffer(Product,Buyer,Price)
 
-	respondToSaleOffer(Product,Buyer,Price) <- not waitingFor(Product,Buyer) and not waitingFor(Product,null) |
-	AddRespondTo(Product,Buyer)
-	
-	respondToSaleOffer(Product,Buyer,Price) <- findBestSale(Product,Best) 
-	           and lastPrice(Product,Best,LastPrice)
-	           and stepFactor(StepFactor) 
-	           and minStep(MinStep) |
-	G(sold(Product,MinPrice));
-	if B(((LastPrice - MinPrice) * StepFactor) > MinStep) & B((LastPrice - ((LastPrice - MinPrice)*StepFactor)) > Price)
-	 then makeSaleOffer(Product,Buyer,0)
-	 else if B(Price < MinPrice)
-	   then [rejectSaleOffer(Product,Buyer);
-	     initiateNewRoundSale(Product)]
-	   else [B(name(Me));
-	     SetWaitingFor(Product,null);
-	     RemoveRespondTo(Product,Buyer);
-	     B(respondTo(Product,List));
-	     removeOffer(Product,List);
-	     send(Buyer,inform,handleAcceptBuy(Product,Me,Price));
-	     send(matchmaker,inform,removeOffer(Product,Me));
-	     print(sold(Product,to,Buyer,for,Price));
-	     SetSold(Product,MinPrice)]
-	
-	removeOffer(Product,[]) <- true |
-	skip
-	
-	removeOffer(Product,[First|Rest]) <- true |
-	[rejectSaleOffer(Product,First);
-	removeOffer(Product,Rest)]
-	
-	rejectSaleOffer(Product,Buyer) <- true |
-	[B(name(Me));
-	RemoveRespondTo(Product,Buyer);
-	RemoveLastPrice(Product,Buyer);
-	B(sales(Product,Buyers));
-	B(removeFromList(Buyers,Buyer,NewList));
-	SetSales(Product,NewList);
-	send(Buyer,inform,handleRejectBuy(Product,Me))]
-	
-	initiateNewRoundSale(Product) <- findBestSale(Product,null) |
-	skip
-	
-	initiateNewRoundSale(Product) <- findBestSale(Product,Best) and initialSent(Product,Best) |
-	makeSaleOffer(Product,Best,0)
-	
-	initiateNewRoundSale(Product) <- findBestSale(Product,Best) and not initialSent(Product,Best) |
-	makeSaleOffer(Product,Best,1)
-	
-	message(Buyer,inform,_,_,handleAcceptSale(Product,Buyer,Price)) <- true |
-	[SetWaitingFor(Product,null);
-	RemoveRespondTo(Product,Buyer);
-	B(respondTo(Product,List));
-	removeOffer(Product,List);
-	B(name(Me));
-	send(matchmaker,inform,removeOffer(Product,Me));
-	G(sold(Product,MinPrice));
-	print(sold(Product,to,Buyer,for,Price));
-	SetSold(Product,MinPrice)]
-	
-	message(Buyer,inform,_,_,handleRejectSale(Product,Buyer)) <- true |
-	[RemoveRespondTo(Product,Buyer);
-	RemoveLastPrice(Product,Buyer);
-	B(sales(Product,Buyers));
-	B(removeFromList(Buyers,Buyer,NewList));
-	SetSales(Product,NewList);
-	initiateNewRoundSale(Product)]
-	
-	// Buyer
-	
-	message(Partner,inform,_,_,setSellers(Product,Sellers)) <- empty(Sellers) |
-	skip
-	
-	message(Partner,inform,_,_,setSellers(Product,Sellers)) <- not empty(Sellers) |
-	[SetNegotiations(Product,Sellers);
-	setupNegotiations(Product,Sellers)]
-	
-	setupNegotiations(Product,[First|Rest]) <- true |
-	[G(bought(Product,Price));
-	SetLastPrice(Product,First,Price * 0.5);
-	setupNegotiations(Product,Rest)]
+ respondToSaleOffer(Product,Buyer,Price) <- not waitingFor(Product,Buyer) and not waitingFor(Product,null) |
+ AddRespondTo(Product,Buyer)
+ 
+ respondToSaleOffer(Product,Buyer,Price) <- 
+  findBestSale(Product,Best) 
+  and lastPrice(Product,Best,LastPrice)
+  and stepFactor(StepFactor) 
+  and minStep(MinStep) |
+ G(sold(Product,MinPrice));
+ if B(((LastPrice - MinPrice) * StepFactor) > MinStep) & B((LastPrice - ((LastPrice - MinPrice)*StepFactor)) > Price)
+  then makeSaleOffer(Product,Buyer,0)
+  else if B(Price < MinPrice)
+   then [rejectSaleOffer(Product,Buyer);
+         initiateNewRoundSale(Product)]
+   else [B(name(Me));
+         SetWaitingFor(Product,null);
+         RemoveRespondTo(Product,Buyer);
+         B(respondTo(Product,List));
+         removeOffer(Product,List);
+         send(Buyer,inform,handleAcceptBuy(Product,Me,Price));
+         send(matchmaker,inform,removeOffer(Product,Me));
+         @env(printList(sold,Product,to,Buyer,for,Price),_);
+         SetSold(Product,MinPrice)]
+ 
+ removeOffer(Product,[]) <- true |
+ skip
+ 
+ removeOffer(Product,[First|Rest]) <- true |
+ [rejectSaleOffer(Product,First);
+ removeOffer(Product,Rest)]
+ 
+ rejectSaleOffer(Product,Buyer) <- true |
+ [B(name(Me));
+ RemoveRespondTo(Product,Buyer);
+ RemoveLastPrice(Product,Buyer);
+ B(sales(Product,Buyers));
+ B(removeFromList(Buyers,Buyer,NewList));
+ SetSales(Product,NewList);
+ send(Buyer,inform,handleRejectBuy(Product,Me))]
+ 
+ initiateNewRoundSale(Product) <- findBestSale(Product,null) |
+ skip
+ 
+ initiateNewRoundSale(Product) <- findBestSale(Product,Best) and initialSent(Product,Best) |
+ makeSaleOffer(Product,Best,0)
+ 
+ initiateNewRoundSale(Product) <- findBestSale(Product,Best) and not initialSent(Product,Best) |
+ makeSaleOffer(Product,Best,1)
+ 
+ message(Buyer,inform,_,_,handleAcceptSale(Product,Buyer,Price)) <- true |
+ [SetWaitingFor(Product,null);
+ RemoveRespondTo(Product,Buyer);
+ B(respondTo(Product,List));
+ removeOffer(Product,List);
+ B(name(Me));
+ send(matchmaker,inform,removeOffer(Product,Me));
+ G(sold(Product,MinPrice));
+ @env(printList(sold,Product,to,Buyer,for,Price),_);
+ SetSold(Product,MinPrice)]
+ 
+ message(Buyer,inform,_,_,handleRejectSale(Product,Buyer)) <- true |
+ [RemoveRespondTo(Product,Buyer);
+ RemoveLastPrice(Product,Buyer);
+ B(sales(Product,Buyers));
+ B(removeFromList(Buyers,Buyer,NewList));
+ SetSales(Product,NewList);
+ initiateNewRoundSale(Product)]
+ 
+ // Buyer
+ 
+ message(Partner,inform,_,_,setSellers(Product,Sellers)) <- empty(Sellers) |
+ skip
+ 
+ message(Partner,inform,_,_,setSellers(Product,Sellers)) <- not empty(Sellers) |
+ [SetNegotiations(Product,Sellers);
+ setupNegotiations(Product,Sellers)]
+ 
+ setupNegotiations(Product,[First|Rest]) <- true |
+ [G(bought(Product,Price));
+ SetLastPrice(Product,First,Price * 0.5);
+ setupNegotiations(Product,Rest)]
 
-	setupNegotiations(Product,[]) <- true |
-	[B(findBestNegotiation(Product,Best));
-	makeBuyOffer(Product,Best,1)]
-	            
-	makeBuyOffer(Product,Seller,1) <- lastPrice(Product,Seller,_) and not initialSent(Product,Seller) |
-	[SetWaitingFor(Product,Seller);
-	B(name(Me));
-	B(lastPrice(Product,Seller,OldPrice));
-	G(bought(Product,MaxPrice));
-	SetInitialSent(Product,Seller);
-	RemoveRespondTo(Product,Seller);
-	send(Seller,request,reactToSaleOffer(Product,Me,OldPrice,1))]
-	
-	makeBuyOffer(Product,Seller,1) <- initialSent(Product,Seller) |
-	skip
-	
-	message(Seller,request,_,_,reactToBuyOffer(Product,Seller,Price,Initial)) <- true |
-	reactToBuyOffer(Product,Seller,Price,Initial)
-	
-	reactToBuyOffer(Product,Seller,_,_) <- bought(Product) |
-	rejectBuyOffer(Product,Seller)
-	
-	reactToBuyOffer(Product,Seller,Price,1) <- initialSent(Product,Seller) |
-	skip
-	
-	reactToBuyOffer(Product,Seller,Price,1) <- not lastPrice(Product,Buyer,_) and not lastPrice(Product,Seller,LastPrice)|
-	[G(bought(Product,MaxPrice));
-	SetLastPrice(Product,Seller,MaxPrice * 0.5);
-	AddNegotiation(Product,Seller);
-	reactToBuyOffer(Product,Seller,Price,1)]
-	
-	reactToBuyOffer(Product,Seller,Price,Initial) <- not waitingFor(Product,Seller) and not waitingFor(Product,null) |
-	AddRespondTo(Product,Seller)
-	
-	reactToBuyOffer(Product,Seller,Price,Initial) <- lastPrice(Product,Seller,_) |
-	respondToBuyOffer(Product,Seller,Price,Initial)
+ setupNegotiations(Product,[]) <- true |
+ [B(findBestNegotiation(Product,Best));
+ makeBuyOffer(Product,Best,1)]
+             
+ makeBuyOffer(Product,Seller,1) <- lastPrice(Product,Seller,_) and not initialSent(Product,Seller) |
+ [SetWaitingFor(Product,Seller);
+ B(name(Me));
+ B(lastPrice(Product,Seller,OldPrice));
+ G(bought(Product,MaxPrice));
+ SetInitialSent(Product,Seller);
+ RemoveRespondTo(Product,Seller);
+ send(Seller,request,reactToSaleOffer(Product,Me,OldPrice,1))]
+ 
+ makeBuyOffer(Product,Seller,1) <- initialSent(Product,Seller) |
+ skip
+ 
+ message(Seller,request,_,_,reactToBuyOffer(Product,Seller,Price,Initial)) <- true |
+ reactToBuyOffer(Product,Seller,Price,Initial)
+ 
+ reactToBuyOffer(Product,Seller,_,_) <- bought(Product) |
+ rejectBuyOffer(Product,Seller)
+ 
+ reactToBuyOffer(Product,Seller,Price,1) <- initialSent(Product,Seller) |
+ skip
+ 
+ reactToBuyOffer(Product,Seller,Price,1) <- not lastPrice(Product,Buyer,_) and not lastPrice(Product,Seller,LastPrice)|
+ [G(bought(Product,MaxPrice));
+ SetLastPrice(Product,Seller,MaxPrice * 0.5);
+ AddNegotiation(Product,Seller);
+ reactToBuyOffer(Product,Seller,Price,1)]
+ 
+ reactToBuyOffer(Product,Seller,Price,Initial) <- not waitingFor(Product,Seller) and not waitingFor(Product,null) |
+ AddRespondTo(Product,Seller)
+ 
+ reactToBuyOffer(Product,Seller,Price,Initial) <- lastPrice(Product,Seller,_) |
+ respondToBuyOffer(Product,Seller,Price,Initial)
 
-	respondToBuyOffer(Product,Seller,_,1) <- initialSent(Product,Seller) |
-	skip
-	
-	respondToBuyOffer(Product,Seller,Price,Initial) <- not waitingFor(Product,Seller) and not waitingFor(Product,null) |
-	AddRespondTo(Product,Seller)
-	
-	respondToBuyOffer(Product,Seller,Price,Initial) <- findBestNegotiation(Product,Best) 
-	           and lastPrice(Product,Best,LastPrice)
-	           and stepFactor(StepFactor) 
-	           and minStep(MinStep) |
-	G(bought(Product,MaxPrice));
-	if B(((MaxPrice-LastPrice)*StepFactor) > MinStep) & B((LastPrice + ((MaxPrice-LastPrice)*StepFactor)) < Price)
-	 then [SetInitialSent(Product,Seller);
-              SetWaitingFor(Product,Seller);
-              B(name(Me));
-              B(lastPrice(Product,Seller,OldPrice));
-              G(bought(Product,MaxPrice));
-              SetLastPrice(Product,Seller,OldPrice + ((MaxPrice-OldPrice)*StepFactor));
-              RemoveRespondTo(Product,Seller);
-	      send(Seller,request,reactToSaleOffer(Product,Me,OldPrice + ((MaxPrice-OldPrice)*StepFactor),0))]
-	 else if B(Price > MaxPrice)
-	   then [rejectBuyOffer(Product,Seller);
-	     initiateNewRoundBuy(Product)]
-	   else [B(name(Me));
-	     SetWaitingFor(Product,null);
-	     RemoveRespondTo(Product,Seller);
-	     B(respondTo(Product,List));
-	     removeRequest(Product,List);
-	     send(Seller,inform,handleAcceptSale(Product,Me,Price));
-	     send(matchmaker,inform,removeRequest(Product,Me));
-	     print(bought(Product,from,Seller,for,Price));
-	     SetBought(Product,MaxPrice)]
-	
-	removeRequest(Product,[]) <- true |
-	skip
-	
-	removeRequest(Product,[First|Rest]) <- true |
-	[rejectBuyOffer(Product,First);
-	removeRequest(Product,Rest)]
-	
-	rejectBuyOffer(Product,Seller) <- true |
-	[B(name(Me));
-	RemoveRespondTo(Product,Seller);
-	RemoveLastPrice(Product,Seller);
-	B(negotiations(Product,Sellers));
-	B(removeFromList(Sellers,Seller,NewList));
-	SetNegotiations(Product,NewList);
-	send(Seller,inform,handleRejectSale(Product,Me))]
-	
-	initiateNewRoundBuy(Product) <- findBestNegotiation(Product,null) |
-	skip
-	
-	initiateNewRoundBuy(Product) <- findBestNegotiation(Product,Best) and initialSent(Product,Best) |
-	makeBuyOffer(Product,Best,0)
-	
-	initiateNewRoundBuy(Product) <- findBestNegotiation(Product,Best) and not initialSent(Product,Best) |
-	makeBuyOffer(Product,Best,1)
-	
-	message(Buyer,inform,_,_,handleAcceptBuy(Product,Seller,Price)) <- true |
-	[SetWaitingFor(Product,null);
-	RemoveRespondTo(Product,Seller);
-	B(respondTo(Product,List));
-	removeRequest(Product,List);
-	B(name(Me));
-	send(matchmaker,inform,removeRequest(Product,Me));
-	G(bought(Product,MaxPrice));
-	print(bought(Product,from,Seller,for,Price));
-	SetBought(Product,MaxPrice)]
-	
-	message(Buyer,inform,_,_,handleRejectBuy(Product,Seller)) <- true |
-	[RemoveRespondTo(Product,Seller);
-	RemoveLastPrice(Product,Seller);
-	B(negotiations(Product,Sellers));
-	B(removeFromList(Sellers,Seller,NewList));
-	SetNegotiations(Product,NewList);
-	initiateNewRoundBuy(Product)]
-	
+ respondToBuyOffer(Product,Seller,_,1) <- initialSent(Product,Seller) |
+ skip
+ 
+ respondToBuyOffer(Product,Seller,Price,Initial) <- not waitingFor(Product,Seller) and not waitingFor(Product,null) |
+ AddRespondTo(Product,Seller)
+ 
+ respondToBuyOffer(Product,Seller,Price,Initial) <- 
+  findBestNegotiation(Product,Best) 
+  and lastPrice(Product,Best,LastPrice)
+  and stepFactor(StepFactor) 
+  and minStep(MinStep) |
+ G(bought(Product,MaxPrice));
+ if B(((MaxPrice-LastPrice)*StepFactor) > MinStep) & B((LastPrice + ((MaxPrice-LastPrice)*StepFactor)) < Price)
+  then [SetInitialSent(Product,Seller);
+        SetWaitingFor(Product,Seller);
+        B(name(Me));
+        B(lastPrice(Product,Seller,OldPrice));
+        G(bought(Product,MaxPrice));
+        SetLastPrice(Product,Seller,OldPrice + ((MaxPrice-OldPrice)*StepFactor));
+        RemoveRespondTo(Product,Seller);
+        send(Seller,request,reactToSaleOffer(Product,Me,OldPrice + ((MaxPrice-OldPrice)*StepFactor),0))]
+  else if B(Price > MaxPrice)
+   then [rejectBuyOffer(Product,Seller);
+         initiateNewRoundBuy(Product)]
+   else [B(name(Me));
+         SetWaitingFor(Product,null);
+         RemoveRespondTo(Product,Seller);
+         B(respondTo(Product,List));
+         removeRequest(Product,List);
+         send(Seller,inform,handleAcceptSale(Product,Me,Price));
+         send(matchmaker,inform,removeRequest(Product,Me));
+         @env(printList(bought,Product,from,Seller,for,Price),_);
+         SetBought(Product,MaxPrice)]
+ 
+ removeRequest(Product,[]) <- true |
+ skip
+ 
+ removeRequest(Product,[First|Rest]) <- true |
+ [rejectBuyOffer(Product,First);
+ removeRequest(Product,Rest)]
+ 
+ rejectBuyOffer(Product,Seller) <- true |
+ [B(name(Me));
+ RemoveRespondTo(Product,Seller);
+ RemoveLastPrice(Product,Seller);
+ B(negotiations(Product,Sellers));
+ B(removeFromList(Sellers,Seller,NewList));
+ SetNegotiations(Product,NewList);
+ send(Seller,inform,handleRejectSale(Product,Me))]
+ 
+ initiateNewRoundBuy(Product) <- findBestNegotiation(Product,null) |
+ skip
+ 
+ initiateNewRoundBuy(Product) <- findBestNegotiation(Product,Best) and initialSent(Product,Best) |
+ makeBuyOffer(Product,Best,0)
+ 
+ initiateNewRoundBuy(Product) <- findBestNegotiation(Product,Best) and not initialSent(Product,Best) |
+ makeBuyOffer(Product,Best,1)
+ 
+ message(Buyer,inform,_,_,handleAcceptBuy(Product,Seller,Price)) <- true |
+ [SetWaitingFor(Product,null);
+ RemoveRespondTo(Product,Seller);
+ B(respondTo(Product,List));
+ removeRequest(Product,List);
+ B(name(Me));
+ send(matchmaker,inform,removeRequest(Product,Me));
+ G(bought(Product,MaxPrice));
+ @env(printList(bought,Product,from,Seller,for,Price),_);
+ SetBought(Product,MaxPrice)]
+ 
+ message(Buyer,inform,_,_,handleRejectBuy(Product,Seller)) <- true |
+ [RemoveRespondTo(Product,Seller);
+ RemoveLastPrice(Product,Seller);
+ B(negotiations(Product,Sellers));
+ B(removeFromList(Sellers,Seller,NewList));
+ SetNegotiations(Product,NewList);
+ initiateNewRoundBuy(Product)]
+ 
