@@ -112,7 +112,7 @@ PG-rules:
  
 PC-rules:
  message(Partner,inform,_,_,setBuyers(Product,Buyers)) <- empty(Buyers) |
- skip
+ @env(printList([currently,no,buyers,for,Product]),_)
  
  message(Partner,inform,_,_,setBuyers(Product,Buyers)) <- not empty(Buyers) |
  [SetSales(Product,Buyers);
@@ -134,6 +134,7 @@ PC-rules:
  G(sold(Product,MinPrice));
  SetInitialSent(Product,Buyer);
  RemoveRespondTo(Product,Buyer);
+ @env(printList([offering,Buyer,to,sell,Product,for,OldPrice]),_);
  send(Buyer,request,reactToBuyOffer(Product,Me,OldPrice,1))]
  
  makeSaleOffer(Product,Buyer,1) <- lastPrice(Product,Buyer,_) and initialSent(Product,Buyer) |
@@ -151,6 +152,8 @@ PC-rules:
  B(stepFactor(StepFactor));
  SetLastPrice(Product,Buyer,OldPrice - ((OldPrice-MinPrice)*StepFactor));
  RemoveRespondTo(Product,Buyer);
+ B(lastPrice(Product,Buyer,PrintPrice));
+ @env(printList([offering,Buyer,to,sell,Product,for,PrintPrice]),_);
  send(Buyer,request,reactToBuyOffer(Product,Me,OldPrice - ((OldPrice-MinPrice) * StepFactor),0))]
  
  message(Partner,request,_,_,reactToSaleOffer(Product,Buyer,_,_)) <- sold(Product) |
@@ -187,9 +190,10 @@ PC-rules:
          RemoveRespondTo(Product,Buyer);
          B(respondTo(Product,List));
          removeOffer(Product,List);
+         @env(printList([accepting,sale,offer,from,Buyer,for,Product,for,Price]),_);
          send(Buyer,inform,handleAcceptBuy(Product,Me,Price));
          send(matchmaker,inform,removeOffer(Product,Me));
-         @env(printList(sold,Product,to,Buyer,for,Price),_);
+         @env(printList([sold,Product,to,Buyer,for,Price]),_);
          SetSold(Product,MinPrice)]
  
  removeOffer(Product,[]) <- true |
@@ -206,10 +210,11 @@ PC-rules:
  B(sales(Product,Buyers));
  B(removeFromList(Buyers,Buyer,NewList));
  SetSales(Product,NewList);
+ @env(printList([rejecting,sale,offer,from,Buyer,for,Product]),_);
  send(Buyer,inform,handleRejectBuy(Product,Me))]
  
  initiateNewRoundSale(Product) <- findBestSale(Product,null) |
- skip
+ @env(printList([no,other,buyers,for,Product]),_)
  
  initiateNewRoundSale(Product) <- findBestSale(Product,Best) and initialSent(Product,Best) |
  makeSaleOffer(Product,Best,0)
@@ -219,17 +224,19 @@ PC-rules:
  
  message(Buyer,inform,_,_,handleAcceptSale(Product,Buyer,Price)) <- true |
  [SetWaitingFor(Product,null);
+ @env(printList([got,accept,from,Buyer,for,Product,for,Price]),_);
  RemoveRespondTo(Product,Buyer);
  B(respondTo(Product,List));
  removeOffer(Product,List);
  B(name(Me));
  send(matchmaker,inform,removeOffer(Product,Me));
  G(sold(Product,MinPrice));
- @env(printList(sold,Product,to,Buyer,for,Price),_);
+ @env(printList([sold,Product,to,Buyer,for,Price]),_);
  SetSold(Product,MinPrice)]
  
  message(Buyer,inform,_,_,handleRejectSale(Product,Buyer)) <- true |
  [RemoveRespondTo(Product,Buyer);
+ @env(printList([got,reject,from,Buyer,for,Product]),_);
  RemoveLastPrice(Product,Buyer);
  B(sales(Product,Buyers));
  B(removeFromList(Buyers,Buyer,NewList));
@@ -239,7 +246,7 @@ PC-rules:
  // Buyer
  
  message(Partner,inform,_,_,setSellers(Product,Sellers)) <- empty(Sellers) |
- skip
+ @env(printList([currently,no,sellers,for,Product]),_)
  
  message(Partner,inform,_,_,setSellers(Product,Sellers)) <- not empty(Sellers) |
  [SetNegotiations(Product,Sellers);
@@ -261,6 +268,7 @@ PC-rules:
  G(bought(Product,MaxPrice));
  SetInitialSent(Product,Seller);
  RemoveRespondTo(Product,Seller);
+ @env(printList([offering,Seller,to,buy,Product,for,OldPrice]),_);
  send(Seller,request,reactToSaleOffer(Product,Me,OldPrice,1))]
  
  makeBuyOffer(Product,Seller,1) <- initialSent(Product,Seller) |
@@ -307,6 +315,8 @@ PC-rules:
         G(bought(Product,MaxPrice));
         SetLastPrice(Product,Seller,OldPrice + ((MaxPrice-OldPrice)*StepFactor));
         RemoveRespondTo(Product,Seller);
+        B(lastPrice(Product,Seller,PrintPrice));
+        @env(printList([offering,Seller,to,buy,Product,for,PrintPrice]),_);
         send(Seller,request,reactToSaleOffer(Product,Me,OldPrice + ((MaxPrice-OldPrice)*StepFactor),0))]
   else if B(Price > MaxPrice)
    then [rejectBuyOffer(Product,Seller);
@@ -316,9 +326,10 @@ PC-rules:
          RemoveRespondTo(Product,Seller);
          B(respondTo(Product,List));
          removeRequest(Product,List);
+         @env(printList([accepting,buy,offer,from,Seller,for,Product,for,Price]),_);
          send(Seller,inform,handleAcceptSale(Product,Me,Price));
          send(matchmaker,inform,removeRequest(Product,Me));
-         @env(printList(bought,Product,from,Seller,for,Price),_);
+         @env(printList([bought,Product,from,Seller,for,Price]),_);
          SetBought(Product,MaxPrice)]
  
  removeRequest(Product,[]) <- true |
@@ -335,10 +346,11 @@ PC-rules:
  B(negotiations(Product,Sellers));
  B(removeFromList(Sellers,Seller,NewList));
  SetNegotiations(Product,NewList);
+ @env(printList([rejectung,buy,offer,from,Seller,for,Product]),_);
  send(Seller,inform,handleRejectSale(Product,Me))]
  
  initiateNewRoundBuy(Product) <- findBestNegotiation(Product,null) |
- skip
+ @env(printList([no,other,sellers,for,Product]),_)
  
  initiateNewRoundBuy(Product) <- findBestNegotiation(Product,Best) and initialSent(Product,Best) |
  makeBuyOffer(Product,Best,0)
@@ -348,17 +360,19 @@ PC-rules:
  
  message(Buyer,inform,_,_,handleAcceptBuy(Product,Seller,Price)) <- true |
  [SetWaitingFor(Product,null);
+ @env(printList([got,accept,from,Seller,for,Product,for,Price]),_);
  RemoveRespondTo(Product,Seller);
  B(respondTo(Product,List));
  removeRequest(Product,List);
  B(name(Me));
  send(matchmaker,inform,removeRequest(Product,Me));
  G(bought(Product,MaxPrice));
- @env(printList(bought,Product,from,Seller,for,Price),_);
+ @env(printList([bought,Product,from,Seller,for,Price]),_);
  SetBought(Product,MaxPrice)]
  
  message(Buyer,inform,_,_,handleRejectBuy(Product,Seller)) <- true |
  [RemoveRespondTo(Product,Seller);
+ @env(printList([got,reject,from,Seller,for,Product]),_);
  RemoveLastPrice(Product,Seller);
  B(negotiations(Product,Sellers));
  B(removeFromList(Sellers,Seller,NewList));
