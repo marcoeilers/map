@@ -169,7 +169,7 @@ public class ElectronicMarketEnv extends Environment {
 			args = (APLList) args.getTail();
 			separator = " ";
 		}
-		logger.info(sb.toString());
+		System.out.println(sb.toString());
 		return wrapBoolean(true);
 	}
 
