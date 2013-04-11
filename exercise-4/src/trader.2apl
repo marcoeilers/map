@@ -378,7 +378,7 @@ PC-rules:
  B(negotiations(Product,Sellers));
  B(removeFromList(Sellers,Seller,NewList));
  SetNegotiations(Product,NewList);
- @env(printList([rejectung,buy,offer,from,Seller,for,Product]),_);
+ @env(printList([rejecting,buy,offer,from,Seller,for,Product]),_);
  send(Seller,inform,handleRejectSale(Product,Me))]
  
  initiateNewRoundBuy(Product) <- findBestNegotiation(Product,null) |
