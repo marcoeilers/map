@@ -1,3 +1,7 @@
+/*
+ * Implementation of the matchmaker
+ * Only communicates between the traders and the environment.
+ */
 PC-rules:
   message(Trader,inform,_,_,registerOffer(Offer,Trader)) <- true |
   	@env( addOffer( Trader,Offer ), _ )
@@ -19,4 +23,4 @@ PC-rules:
   message(Trader,request,_,_,getSellers(Request,Trader)) <- true |
   	@env( getSellers( Trader,Request ), SellersResult);
   	B(SellersResult = [actionresult(Sellers)]);
-  	send( Trader,inform,setSellers( Request,Sellers ) )  	
+  	send( Trader,inform,setSellers( Request,Sellers ) ) 
