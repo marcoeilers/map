@@ -1,0 +1,36 @@
+// In this example organization the wumpus explodes whenever we move the agent. Clicking 
+// on the agent results in showing 999 points. Notice how a message is overwritten when
+// an existing topic is used. Your solution should have around 8 to 10 counts-as rules and
+// about the same amount of sanction rules. You can remove the example code, except for the 
+// last two sanction rules which you can use to bombard the wumpus and show a message.
+Facts: 
+// The Prolog part should be very minimal; just store the basic facts to describe the 
+// world. The used Prolog engine is prototypical and has very few built-ins. Though you
+// probably only need findall/3 (which does work). 
+description(mymsg,'Points: '). 
+p.
+
+Effects: 
+// Very much like BeliefUpdates in 2APL (they're both based on Hoare Triples)
+{p and not q}
+	move(DeltaX,DeltaY)
+{r and not p}
+
+{true}
+    gripper(_) // The argument will be either pickup or drop
+{z}
+
+Counts-as: 
+// Note that first the closure of the counts-as rules is taken and then we move on to sanction rules.
+// You should use the counts-as rules for generating the obey/viol facts (though you can name them differently).
+not q and r => viol(x).
+z => obey(z).
+
+Sanction rules:
+// Use the sanction rules to create consequences
+viol(x) => not viol(x) and do_bombard and show(mymsg, 100).
+obey(z) => not obey(z) and not z and show(mymsg, 999).
+
+// Use these to influence the GUI
+do_bombard,@external(gui,bombard_wumpus,_) => not do_bombard.
+show(Topic,Grade), description(Topic,Desc), int_to_atom(Grade,GradeAtom), atom_concat(Desc,GradeAtom,Msg), @external(gui,show_notice(Topic,Msg),_) => not show(Topic,Grade).

@@ -1,0 +1,32 @@
+// In this example we must click on the agent after the first move. 
+// For instance: move, move => violation
+//               move, click => obey
+// Likely your temporal norm solution is exactly the same as the orginal one, except that you replaced
+// the counts-as rules with temporal norms. 
+Facts: 
+description(mymsg,'Points: ').
+
+Effects: 
+{not moved}
+	move(_,_)
+{moved}
+
+{moved}
+	move(_,_)
+{moved_again} 
+
+{moved}
+    gripper(_) // The argument will be either pickup or drop
+{clicked_on_agent}
+
+Temporal norms:
+// Temporal norms automatically generate viol and obey facts.
+some_label: [moved,O(clicked_on_agent),moved_again] // Use F for Forbidden, and O for Obligation 
+
+Sanction rules:
+viol(some_label) => not viol(some_label) and show(mymsg, -10).
+obey(some_label) => not obey(some_label) and show(mymsg, 10).
+
+// Use these to influence the GUI
+do_bombard,@external(gui,bombard_wumpus,_) => not do_bombard.
+show(Topic,Grade), description(Topic,Desc), int_to_atom(Grade,GradeAtom), atom_concat(Desc,GradeAtom,Msg), @external(gui,show_notice(Topic,Msg),_) => not show(Topic,Grade).
