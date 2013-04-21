@@ -113,12 +113,11 @@ Sanction rules:
   // delivering the gold without taking the shortest path is rewarded with 4 points
   obey(deliver_gold) and not obey(shortest_path) and points(P) and add(P, 4, NP) =>
     not obey(deliver_gold) and // remove obligation
-    points(NP) and not points(P) and /* not dropped_gold and */ show(delivered_gold, 4) and show(final_grade, NP). // update points and show notification
+    points(NP) and not points(P) and show(delivered_gold, 4) and show(final_grade, NP). // update points and show notification
 
   // delivering the gold and taking the shortest path is rewarded with 6 points
   obey(deliver_gold) and obey(shortest_path) and points(P) and add(P, 6, NP) =>
     not obey(deliver_gold) and not obey(shortest_path) and // remove obligations
-    // not dropped_gold and // remove the info that the gold has been dropped
     points(NP) and not points(P) and show(delivered_gold, 4) and show(shortest_path, 2) and show(final_grade, NP). // update points and show notification
 
   // standing on the wumpus is punished with deduction of 4 points
@@ -128,7 +127,7 @@ Sanction rules:
     points(NP) and not points(P) and show(stood_on_wumpus, -4). // update points and show notification
 
   // plays the killing Wumpus animation
-  do_bombard, @external(gui,bombard_wumpus,_) =>
+  do_bombard, @external(gui, bombard_wumpus, _) =>
     not do_bombard.
 
   // shows a topic with a grade in the notification area
