@@ -16,6 +16,8 @@ Facts:
 
   // the agent stands on the chest initially
   position(1, 1).
+
+  // keeps track of the moves
   moves(0).
 
   // no points initially
@@ -25,7 +27,7 @@ Facts:
   pitpoints(0).
 
   // description texts
-  description(final_grade, 'Final Grade: ').
+  description(final_grade, 'Final grade: ').
   description(found_gold, 'Found the gold: ').
   description(picked_up_gold, 'Picked up the gold: ').
   description(stood_on_pit, 'Stood on pit: ').
@@ -37,19 +39,21 @@ Facts:
   add(X, Y, Z) :- Z is X + Y.
 
 Effects:
-  // movement
+  // movement, increase number of moves
   { position(X, Y) and add(X, DX, NX) and add(Y, DY, NY) and moves(M) and add(M, 1, NM) }
     move(DX, DY)
   { not position(X, Y) and position(NX, NY) and not moves(M) and moves(NM) }
 
   // picking up the gold
   // only possible if there is gold at the current position
+  // remember when the gold has been picked up
   { position(X, Y) and gold(X, Y) and moves(M) }
     gripper(pickup)
   { picked_up_gold(M) and not gold(X, Y) }
 
   // dropping the gold
   // only possible if the agent is at the chest and carries gold
+  // remember when the gold has been dropped
   { position(X, Y) and chest(X, Y) and picked_up_gold(_) and not dropped_gold(_) and moves(M) }
     gripper(drop)
   { dropped_gold(M) }
@@ -65,11 +69,11 @@ Counts-as:
   // remember the moves after finding the gold for the first time
   position(X, Y) and gold(X, Y) and not found_gold(_) and moves(M) => obey(find_gold) and found_gold(M).
 
-  // if the remaining moves are 0, the agent is at the chest and delivered the gold,
+  // if the gold has been dropped 3 moves after it has been picked up and the agent is at the chest,
   // then the shortest path has been chosen after picking up the gold
   moves(M) and picked_up_gold(P) and add(P, 3, M) and position(X, Y) and chest(X, Y) and dropped_gold(M) => obey(shortest_path).
 
-  // if the remaining moves have been exceeded and the gold has not been dropped,
+  // if at the 4th move after picking up the gold it still is not dropped,
   // then the agent failed to find the shortest path after picking up the gold
   moves(M) and picked_up_gold(P) and add(P, 4, M) and not dropped_gold(_) => viol(shortest_path).
 
@@ -128,8 +132,8 @@ Sanction rules:
 
   // plays the killing Wumpus animation
   do_bombard, @external(gui, bombard_wumpus, _) =>
-    not do_bombard.
+    not do_bombard. // remove
 
   // shows a topic with a grade in the notification area
   show(Topic, Grade), description(Topic, Desc), int_to_atom(Grade, GradeAtom), atom_concat(Desc, GradeAtom, Msg), @external(gui, show_notice(Topic, Msg), _) =>
-    not show(Topic, Grade).
+    not show(Topic, Grade). // remove
