@@ -58,48 +58,41 @@ Effects:
   { not picked_up_gold and dropped_gold }
 
 Temporal norms:
-  // standing on a pit is a violation
-  //position(X, Y) and pit(X, Y) => viol(dont_stand_on_pit).
+  // standing on a pit is always a violation (there is no deadline)
   dont_stand_on_pit: [true, F(position(X, Y) and pit(X, Y)), false]
 
-  // standing on a living wumpus is a violation
-  //position(X, Y) and wumpus(X, Y) => viol(dont_stand_on_wumpus(X, Y)).
+  // standing on a living wumpus is always a violation
   dont_stand_on_wumpus(X,Y): [true, F(position(X, Y) and wumpus(X, Y)), false]
 
   // finding the gold is an obligation
-  // remember the remaining moves after finding the gold
-  // position(X, Y) and gold(X, Y) => obey(find_gold) and just_found_gold(3).
   find_gold: [true, O(position(X, Y) and gold(X, Y)), false]
 
-  // if the remaining moves are 0, the agent is at the chest and delivered the gold,
-  // then the shortest path has been chosen after picking up the gold
-  // just_found_gold(0) and position(X, Y) and chest(X, Y) and dropped_gold => obey(shortest_path).
-  shortest_path: [position(X, Y) and gold(X, Y) and chest(A, B), O(position(A, B) and dropped_gold), just_found_gold(-1)]
+  // once the gold has been found, the agent is obliged to deliver it
+  // in less than 4 moves
+  shortest_path: [position(X, Y) and gold(X, Y) and chest(A, B) and not just_found_gold(_), O(position(A, B) and dropped_gold), just_found_gold(-1)]
 
   // if the agent has not moved before picking up the gold,
   // then he obeys the immediate pickup property
-  immediate_pickup: [position(X, Y) and gold(X, Y), O(picked_up_gold), just_found_gold(2)]
-
+  immediate_pickup: [position(X, Y) and gold(X, Y) and not just_found_gold(_), O(picked_up_gold), just_found_gold(2)]
 
   // if the agent is at the chest and dropped the gold,
   // then he obeyed to deliver the gold
   deliver_gold: [true, O(position(X, Y) and chest(X, Y) and dropped_gold), false]
 
 Sanction rules:
-// standing on a pit is punished with deduction of 1 point
+  // standing on a pit is punished with deduction of 1 point
   viol(dont_stand_on_pit) and points(P) and add(P, -1, NP) =>
     not viol(dont_stand_on_pit) and // remove violation
     points(NP) and not points(P) and show(stood_on_pit, -1). // update points and show notification
 
   // finding the gold is rewarded with 3 points
   obey(find_gold) and points(P) and add(P, 3, NP)  =>
-    just_found_gold(3) and not obey(find_gold) and // remove obligation
+    just_found_gold(3) and not obey(find_gold) and // add move counter and remove obligation
     points(NP) and not points(P) and show(found_gold, 3). // update points and show notification
 
   // not taking the shortest path is punished with deduction of 1 point
   viol(shortest_path) and points(P) and add(P, -1, NP) =>
     not viol(shortest_path) and // remove violation
-    not just_found_gold(-1) and // remove the info that the gold has just been found
     points(NP) and not points(P) and show(shortest_path, -1). // update points and show notification
 
   // immediately picking up the gold after finding it is rewarded with 1 point
@@ -120,7 +113,7 @@ Sanction rules:
   // delivering the gold and taking the shortest path is rewarded with 6 points
   obey(deliver_gold) and obey(shortest_path) and points(P) and add(P, 6, NP) =>
     not obey(deliver_gold) and not obey(shortest_path) and // remove obligations
-    not just_found_gold(0) and not dropped_gold and // remove the info that the gold has just been found and that it has been dropped
+    not dropped_gold and // remove the info that the gold has been dropped
     points(NP) and not points(P) and show(delivered_gold, 4) and show(shortest_path, 2) and show(final_grade, NP). // update points and show notification
 
   // standing on the wumpus is punished with deduction of 4 points
