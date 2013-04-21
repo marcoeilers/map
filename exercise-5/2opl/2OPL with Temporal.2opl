@@ -1,9 +1,8 @@
-// In this example we must click on the agent after the first move. 
-// For instance: move, move => violation
-//               move, click => obey
-// Likely your temporal norm solution is exactly the same as the orginal one, except that you replaced
-// the counts-as rules with temporal norms. 
-Facts: 
+//
+// Solution with temporal norms.
+//
+
+Facts:
   // model of the world
   chest(1, 1).
 
@@ -17,6 +16,8 @@ Facts:
 
   // the agent stands on the chest initially
   position(1, 1).
+
+  // keeps track of the moves
   moves(0).
 
   // no points initially
@@ -26,7 +27,7 @@ Facts:
   pitpoints(0).
 
   // description texts
-  description(final_grade, 'Final Grade: ').
+  description(final_grade, 'Final grade: ').
   description(found_gold, 'Found the gold: ').
   description(picked_up_gold, 'Picked up the gold: ').
   description(stood_on_pit, 'Stood on pit: ').
@@ -37,20 +38,22 @@ Facts:
   // addition
   add(X, Y, Z) :- Z is X + Y.
 
-Effects: 
-  // movement
+Effects:
+  // movement, increase number of moves
   { position(X, Y) and add(X, DX, NX) and add(Y, DY, NY) and moves(M) and add(M, 1, NM) }
     move(DX, DY)
   { not position(X, Y) and position(NX, NY) and not moves(M) and moves(NM) }
 
   // picking up the gold
   // only possible if there is gold at the current position
+  // remember when the gold has been picked up
   { position(X, Y) and gold(X, Y) and moves(M) }
     gripper(pickup)
   { picked_up_gold(M) and not gold(X, Y) }
 
   // dropping the gold
   // only possible if the agent is at the chest and carries gold
+  // remember when the gold has been dropped
   { position(X, Y) and chest(X, Y) and picked_up_gold(_) and not dropped_gold(_) and moves(M) }
     gripper(drop)
   { dropped_gold(M) }
@@ -87,8 +90,8 @@ Sanction rules:
     points(NP) and not points(P) and pitpoints(NPP) and not pitpoints(PP) and show(stood_on_pit, NPP). // update points and show notification
 
   // finding the gold is rewarded with 3 points
-  obey(find_gold) and moves(M) and points(P) and add(P, 3, NP) =>
-    found_gold(M) and // add found time (not possible in norm)
+  obey(find_gold) and points(P) and add(P, 3, NP) and moves(M) =>
+    found_gold(M) and // add found_gold (not possible in norm)
     not obey(find_gold) and // remove obligation
     points(NP) and not points(P) and show(found_gold, 3). // update points and show notification
 
@@ -124,9 +127,9 @@ Sanction rules:
     points(NP) and not points(P) and show(stood_on_wumpus, -4). // update points and show notification
 
   // plays the killing Wumpus animation
-  do_bombard, @external(gui,bombard_wumpus,_) =>
-    not do_bombard.
+  do_bombard, @external(gui, bombard_wumpus, _) =>
+    not do_bombard. // remove
 
   // shows a topic with a grade in the notification area
   show(Topic, Grade), description(Topic, Desc), int_to_atom(Grade, GradeAtom), atom_concat(Desc, GradeAtom, Msg), @external(gui, show_notice(Topic, Msg), _) =>
-    not show(Topic, Grade).
+    not show(Topic, Grade). // remove
