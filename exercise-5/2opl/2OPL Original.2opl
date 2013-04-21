@@ -59,23 +59,9 @@ Effects:
   { dropped_gold(M) }
 
 Counts-as:
-  // standing on a pit is a violation
-  position(X, Y) and pit(X, Y) => viol(dont_stand_on_pit).
-
-  // standing on a living wumpus is a violation
-  position(X, Y) and wumpus(X, Y) => viol(dont_stand_on_wumpus(X, Y)).
-
   // finding the gold is an obligation
   // remember the moves after finding the gold for the first time
   position(X, Y) and gold(X, Y) and not found_gold(_) and moves(M) => obey(find_gold) and found_gold(M).
-
-  // if the gold has been dropped 3 moves after it has been picked up and the agent is at the chest,
-  // then the shortest path has been chosen after picking up the gold
-  moves(M) and picked_up_gold(P) and add(P, 3, M) and position(X, Y) and chest(X, Y) and dropped_gold(M) => obey(shortest_path).
-
-  // if at the 4th move after picking up the gold it still is not dropped,
-  // then the agent failed to find the shortest path after picking up the gold
-  moves(M) and picked_up_gold(P) and add(P, 4, M) and not dropped_gold(_) => viol(shortest_path).
 
   // if the agent has not moved before picking up the gold,
   // then he obeys the immediate pickup property
@@ -88,21 +74,25 @@ Counts-as:
   // then he obeyed to deliver the gold
   moves(M) and position(X, Y) and chest(X, Y) and dropped_gold(M) => obey(deliver_gold).
 
-Sanction rules:
-  // standing on a pit is punished with deduction of 1 point
-  viol(dont_stand_on_pit) and points(P) and add(P, -1, NP) and pitpoints(PP) and add(PP, -1, NPP) =>
-    not viol(dont_stand_on_pit) and // remove violation
-    points(NP) and not points(P) and pitpoints(NPP) and not pitpoints(PP) and show(stood_on_pit, NPP). // update points and show notification
+  // if the gold has been dropped 3 moves after it has been picked up and the agent is at the chest,
+  // then the shortest path has been chosen after picking up the gold
+  moves(M) and picked_up_gold(P) and add(P, 3, M) and position(X, Y) and chest(X, Y) and dropped_gold(M) => obey(shortest_path).
 
+  // if at the 4th move after picking up the gold it still is not dropped,
+  // then the agent failed to find the shortest path after picking up the gold
+  moves(M) and picked_up_gold(P) and add(P, 4, M) and not dropped_gold(_) => viol(shortest_path).
+
+  // standing on a living wumpus is a violation
+  position(X, Y) and wumpus(X, Y) => viol(dont_stand_on_wumpus(X, Y)).
+
+  // standing on a pit is a violation
+  position(X, Y) and pit(X, Y) => viol(dont_stand_on_pit).
+
+Sanction rules:
   // finding the gold is rewarded with 3 points
   obey(find_gold) and points(P) and add(P, 3, NP) =>
     not obey(find_gold) and // remove obligation
     points(NP) and not points(P) and show(found_gold, 3). // update points and show notification
-
-  // not taking the shortest path is punished with deduction of 1 point
-  viol(shortest_path) and points(P) and add(P, -1, NP) =>
-    not viol(shortest_path) and // remove violation
-    points(NP) and not points(P) and show(shortest_path, -1). // update points and show notification
 
   // immediately picking up the gold after finding it is rewarded with 1 point
   obey(immediate_pickup) and points(P) and add(P, 1, NP) =>
@@ -124,11 +114,21 @@ Sanction rules:
     not obey(deliver_gold) and not obey(shortest_path) and // remove obligations
     points(NP) and not points(P) and show(delivered_gold, 4) and show(shortest_path, 2) and show(final_grade, NP). // update points and show notification
 
+  // not taking the shortest path is punished with deduction of 1 point
+  viol(shortest_path) and points(P) and add(P, -1, NP) =>
+    not viol(shortest_path) and // remove violation
+    points(NP) and not points(P) and show(shortest_path, -1). // update points and show notification
+
   // standing on the wumpus is punished with deduction of 4 points
   viol(dont_stand_on_wumpus(X, Y)) and points(P) and add(P, -4, NP) =>
     not viol(dont_stand_on_wumpus(X, Y)) and // remove violation
     do_bombard and not wumpus(X, Y) and // murder the Wumpus
     points(NP) and not points(P) and show(stood_on_wumpus, -4). // update points and show notification
+
+  // standing on a pit is punished with deduction of 1 point
+  viol(dont_stand_on_pit) and points(P) and add(P, -1, NP) and pitpoints(PP) and add(PP, -1, NPP) =>
+    not viol(dont_stand_on_pit) and // remove violation
+    points(NP) and not points(P) and pitpoints(NPP) and not pitpoints(PP) and show(stood_on_pit, NPP). // update points and show notification
 
   // plays the killing Wumpus animation
   do_bombard, @external(gui, bombard_wumpus, _) =>
