@@ -4,29 +4,135 @@
 // Likely your temporal norm solution is exactly the same as the orginal one, except that you replaced
 // the counts-as rules with temporal norms. 
 Facts: 
-description(mymsg,'Points: ').
+  // model of the world
+  chest(1, 1).
+
+  // this fact will be removed once the Wumpus is dead
+  wumpus(1, 3).
+
+  pit(3, 1).
+  pit(3, 3).
+  pit(4, 4).
+  gold(2, 3).
+
+  // the agent stands on the chest initially
+  position(1, 1).
+
+  // no points initially
+  points(0).
+
+  // description texts
+  description(final_grade, 'Final Grade: ').
+  description(found_gold, 'Found the gold: ').
+  description(picked_up_gold, 'Picked up the gold: ').
+  description(stood_on_pit, 'Stood on pit: ').
+  description(delivered_gold, 'Delivered the gold: ').
+  description(shortest_path, 'Shortest path: ').
+  description(stood_on_wumpus, 'Stood on wumpus: ').
+
+  // addition
+  add(X, Y, Z) :- Z is X + Y.
 
 Effects: 
-{not moved}
-	move(_,_)
-{moved}
+  // movement where gold has not just been found
+  { position(X, Y) and add(X, DX, NX) and add(Y, DY, NY) and not just_found_gold(_) }
+    move(DX, DY)
+  { not position(X, Y) and position(NX, NY) }
 
-{moved}
-	move(_,_)
-{moved_again} 
+  // movement where gold has just been found
+  // decrease remaining moves to get the points for immediate delivery by one
+  { position(X, Y) and add(X, DX, NX) and add(Y, DY, NY) and just_found_gold(Moves) and add(Moves, -1, RemainingMoves) }
+    move(DX, DY)
+  { not position(X, Y) and position(NX, NY) and not just_found_gold(Moves) and just_found_gold(RemainingMoves) }
 
-{moved}
-    gripper(_) // The argument will be either pickup or drop
-{clicked_on_agent}
+  // picking up the gold
+  // only possible if there is gold at the current position
+  { position(X, Y) and gold(X, Y) }
+    gripper(pickup)
+  { picked_up_gold and not gold(X, Y) }
+
+  // dropping the gold
+  // only possible if the agent is at the chest and carries gold
+  { position(X, Y) and chest(X, Y) and picked_up_gold }
+    gripper(drop)
+  { not picked_up_gold and dropped_gold }
 
 Temporal norms:
-// Temporal norms automatically generate viol and obey facts.
-some_label: [moved,O(clicked_on_agent),moved_again] // Use F for Forbidden, and O for Obligation 
+  // standing on a pit is a violation
+  //position(X, Y) and pit(X, Y) => viol(dont_stand_on_pit).
+  dont_stand_on_pit: [true, F(position(X, Y) and pit(X, Y)), false]
+
+  // standing on a living wumpus is a violation
+  //position(X, Y) and wumpus(X, Y) => viol(dont_stand_on_wumpus(X, Y)).
+  dont_stand_on_wumpus(X,Y): [true, F(position(X, Y) and wumpus(X, Y)), false]
+
+  // finding the gold is an obligation
+  // remember the remaining moves after finding the gold
+  // position(X, Y) and gold(X, Y) => obey(find_gold) and just_found_gold(3).
+  find_gold: [true, O(position(X, Y) and gold(X, Y)), false]
+
+  // if the remaining moves are 0, the agent is at the chest and delivered the gold,
+  // then the shortest path has been chosen after picking up the gold
+  // just_found_gold(0) and position(X, Y) and chest(X, Y) and dropped_gold => obey(shortest_path).
+  shortest_path: [position(X, Y) and gold(X, Y) and chest(A, B), O(position(A, B) and dropped_gold), just_found_gold(-1)]
+
+  // if the agent has not moved before picking up the gold,
+  // then he obeys the immediate pickup property
+  immediate_pickup: [position(X, Y) and gold(X, Y), O(picked_up_gold), just_found_gold(2)]
+
+
+  // if the agent is at the chest and dropped the gold,
+  // then he obeyed to deliver the gold
+  deliver_gold: [true, O(position(X, Y) and chest(X, Y) and dropped_gold), false]
 
 Sanction rules:
-viol(some_label) => not viol(some_label) and show(mymsg, -10).
-obey(some_label) => not obey(some_label) and show(mymsg, 10).
+// standing on a pit is punished with deduction of 1 point
+  viol(dont_stand_on_pit) and points(P) and add(P, -1, NP) =>
+    not viol(dont_stand_on_pit) and // remove violation
+    points(NP) and not points(P) and show(stood_on_pit, -1). // update points and show notification
 
-// Use these to influence the GUI
-do_bombard,@external(gui,bombard_wumpus,_) => not do_bombard.
-show(Topic,Grade), description(Topic,Desc), int_to_atom(Grade,GradeAtom), atom_concat(Desc,GradeAtom,Msg), @external(gui,show_notice(Topic,Msg),_) => not show(Topic,Grade).
+  // finding the gold is rewarded with 3 points
+  obey(find_gold) and points(P) and add(P, 3, NP)  =>
+    just_found_gold(3) and not obey(find_gold) and // remove obligation
+    points(NP) and not points(P) and show(found_gold, 3). // update points and show notification
+
+  // not taking the shortest path is punished with deduction of 1 point
+  viol(shortest_path) and points(P) and add(P, -1, NP) =>
+    not viol(shortest_path) and // remove violation
+    not just_found_gold(-1) and // remove the info that the gold has just been found
+    points(NP) and not points(P) and show(shortest_path, -1). // update points and show notification
+
+  // immediately picking up the gold after finding it is rewarded with 1 point
+  obey(immediate_pickup) and points(P) and add(P, 1, NP) =>
+    not obey(immediate_pickup) and // remove obligation
+    points(NP) and not points(P) and show(picked_up_gold, 1). // update points and show notification
+
+  // not immediately picking up the gold after finding it is punished with deduction of 1 point
+  viol(immediate_pickup) and points(P) and add(P, -4, NP) =>
+    not viol(immediate_pickup) and // remove violation
+    points(NP) and not points(P) and show(picked_up_gold, -4). // update points and show notification
+
+  // delivering the gold without taking the shortest path is rewarded with 4 points
+  obey(deliver_gold) and not obey(shortest_path) and points(P) and add(P, 4, NP) =>
+    not obey(deliver_gold) and // remove obligation
+    points(NP) and not points(P) and not dropped_gold and show(delivered_gold, 4) and show(final_grade, NP). // update points and show notification
+
+  // delivering the gold and taking the shortest path is rewarded with 6 points
+  obey(deliver_gold) and obey(shortest_path) and points(P) and add(P, 6, NP) =>
+    not obey(deliver_gold) and not obey(shortest_path) and // remove obligations
+    not just_found_gold(0) and not dropped_gold and // remove the info that the gold has just been found and that it has been dropped
+    points(NP) and not points(P) and show(delivered_gold, 4) and show(shortest_path, 2) and show(final_grade, NP). // update points and show notification
+
+  // standing on the wumpus is punished with deduction of 4 points
+  viol(dont_stand_on_wumpus(X, Y)) and points(P) and add(P, -4, NP) =>
+    not viol(dont_stand_on_wumpus(X, Y)) and // remove violation
+    do_bombard and not wumpus(X, Y) and // murder the Wumpus
+    points(NP) and not points(P) and show(stood_on_wumpus, -4). // update points and show notification
+
+  // plays the killing Wumpus animation
+  do_bombard, @external(gui,bombard_wumpus,_) =>
+    not do_bombard.
+
+  // shows a topic with a grade in the notification area
+  show(Topic, Grade), description(Topic, Desc), int_to_atom(Grade, GradeAtom), atom_concat(Desc, GradeAtom, Msg), @external(gui, show_notice(Topic, Msg), _) =>
+    not show(Topic, Grade).
