@@ -8,6 +8,7 @@
 \usepackage{fancyhdr}
 \usepackage{lastpage}
 \usepackage{graphicx}
+\usepackage{listings}
 
 \lhead{\textbf{Normative Programming - Wumpus World}}
 \rhead{(Submission: 28.04.2013)}
@@ -38,28 +39,77 @@ The facts are mainly used to model the Wumpus world: the positions of the \textt
 
 The \texttt{description}s are designed to match the output that can be seen in the screenshot of the exercise description and in the video. Lastly, we introduced a simple \texttt{add}ition function since, for example, \texttt{position(X+DX,Y+DY)} did not result in proper addition of the variable terms but rather in some sort of abstract representation like \texttt{position(+(1.0,1.0),+(1.0,0.0))} which could not be matched in counts-as rules.
 
+Some additional facts are introduced by the effect rules: \texttt{found\_gold(M)} records the step (i.e. the number of the agent's move) when the gold was first found. Similarly, \texttt{picked\_up\_gold(M)} is used to note when the gold was picked up. In both cases, the number of the move is used to establish a deadline for the following obligations. Finally, \texttt{dropped\_gold(M)} establishes when the gold was put back in the chest. 
+
 \subsection{Effects}
 \label{sec:effects}
 The effect rules capture the actions of the agent and update the facts accordingly. The movement effect keeps track of the number of moves made and updates the current position of the agent.
 
 Picking up gold can only be done if the agent is right above the gold. After the gold has been picked up, it is removed from the world and the current number of moves is associated with the pickup event.
 
-Similarly, gold can only be dropped if the agent is right above the chest and has picked up the gold before and not already dropped it. The moment of dropping the gold is captured by remembering the number of moves made by the agent so far.
+Similarly, we assume that the gold is only dropped if the agent is right above the chest and has picked up the gold before and not already dropped it. The moment of dropping the gold is captured by remembering the number of moves made by the agent so far.
 
 \subsection{Sanctioning Rules}
 \label{sec:sanct}
-In addition to the two sanctioning rules to let the organizations perform actions (bombarding the Wumpus and showing a message) multiple sanctioning rules have been introduced to model the required rewards and punishments for the agent. In the pre-conditions the violation/obligation has to be instantiated (see sections~\ref{sec:counts} and~\ref{sec:norms}) and the new score is calculated. In the rule body the instantiated norm is removed and the facts are updated with the new score (the old one is removed). Only when creating a violation by standing on the Wumpus the bombardment of the Wumpus is triggered and the Wumpus is removed from the facts to represent its death.
+In addition to the two sanctioning rules to let the organizations perform actions (bombarding the Wumpus and showing a message) multiple sanctioning rules have been introduced to model the required rewards and punishments for the agent. Typically, the pre-conditions select which violation or compliance with the norm the rule deals with (see sections~\ref{sec:counts} and~\ref{sec:norms}) and a new score is calculated (since we had to use the \texttt{add} rule for this, which is only possible in the precondition). In the rule body the record of the violation or compliance is removed and the facts are updated, among other things, with the new score (the old one is removed). When creating a violation by standing on the Wumpus, the bombardment of the Wumpus is triggered and the Wumpus is removed from the facts to represent its death. 
+
+A typical example of a sanctioning rule looks like this:
+
+\begin{lstlisting}[basicstyle=\footnotesize]
+viol(immediate_pickup) and points(P) and add(P, -4, NP) =>
+ not viol(immediate_pickup) and 
+ points(NP) and not points(P) and show(picked_up_gold, -4).
+\end{lstlisting}
+
+If the \texttt{immediate\_pickup} norm is violated, we first remove the record of the violation from the institutional facts. After that, the old score is removed, the new one (calculated in the precondition) is set, and a message is shown to the user.
+
+For other rules, please have a look at the code, which is well-commented throughout.
 
 Note that the delivery of gold has been coupled to the fact whether the agent took the shortest path back to the chest or not. This is to avoid multiple application of sanctioning rules at the same time with the same initial score. So instead of having to separate sanctioning rules (one for the delivery of gold, one for the taking the shortest path) which would result in two \texttt{points} facts afterwards, they have been combined and the score to be added has been adapted accordingly.
 
 Further minor modifications are discussed in section~\ref{sec:norms} because some updated to the facts could not be made from within the temporal norms and thus had to be moved to the sanctioning rules.
 
-\section{2OPL Counts-as}
-\label{sec:counts}
-The counts-as rules are used to map states to violations and obligations according to the bulleted list in the exercise description section~3, one for each point in corresponding order. The sanctioning rules follow in the same order. Note that we made use of "timestamps" attached to the facts of finding the gold (\texttt{found\_gold}), picking it up (\texttt{picked\_up\_gold}) and dropping it (\texttt{dropped\_gold}) to find out when punishments/rewards have to be imposed and to avoid obligations/violations after certain events took place (such as the first finding of the gold or dropping it into the chest).
+\section{Implementation of norms}
+We converted the given rules following norms:
+\begin{itemize}
+  \item \texttt{find\_gold} describes the obligation to find the gold
+  \item \texttt{immediate\_pickup} describes the obligation to pick up the gold immediately after finding it (i.e. before moving anywhere else)
+  \item \texttt{deliver\_gold} describes the obligation to deliver the gold back to the chest
+  \item \texttt{shortest\_path} describes the obligation to use the shortes path back to the chest, i.e. to use at most three steps
+  \item \texttt{dont\_stand\_on\_wumpus(X,Y)} describes the prohibition of stepping on the wumpus
+  \item \texttt{dont\_stand\_on\_pit} describes the prohibition of walking into pits
+\end{itemize}
 
-\section{2OPL Temporal norms}
+Each of them was implemented with counts-as rules as well as with temporal norms. Some general properties and example rules are discussed in the following sections.
+
+\subsection{2OPL Counts-as rules}
+\label{sec:counts}
+The counts-as rules are used to map states to violations and obligations according to the bulleted list in the exercise description section~3, one for each point in corresponding order. The sanctioning rules follow in the same order. As stated above, we made use of "timestamps" attached to the facts of finding the gold (\texttt{found\_gold}), picking it up (\texttt{picked\_up\_gold}) and dropping it (\texttt{dropped\_gold}) to find out when punishments/rewards have to be imposed and to avoid obligations/violations after certain events took place (such as the first finding of the gold or dropping it into the chest).
+
+The counts-as rule which establishes the violation of \texttt{immediate\_pickup}, which we discussed above, looks like this:
+
+\begin{lstlisting}[basicstyle=\footnotesize]
+moves(M) and found_gold(F) and add(F, 1, M) 
+ and not picked_up_gold(F) 
+   => 
+ viol(immediate_pickup).
+\end{lstlisting}
+
+The rule states that if the gold was found after move $F$ and we are currently in move $M$, but the gold has not yet been picked up, the norm \texttt{immediate\_pickup} is violated. As with the sanctioning rules, please have a look at the code for the other counts-as rules.
+
+\subsection{2OPL Temporal norms}
 \label{sec:norms}
-% TODO slight modification of sanctioning rule(s)
+Like the counts-as rules, the temporal norms in the code are ordered like the requirements in the assignment text. The transformation from counts-as rules to temporal norms was mostly straightforward, with one exception. The one thing that was lacking from temporal norms was the ability to manipulate facts in addition to creating records of violations and compliance, i.e. rules which have consequences like \texttt{viol(something) and someFact(someData)}. This meant that we had to create the fact \texttt{found\_gold(M)} in the sanctioning rule for \texttt{obey(find\_gold)}, the only difference between the sanctioning rules in the counts-as and the temporal norms version. This meant that this fact was only available in the next coordination cycle, which made it necessary to write a somewhat ugly norm for \texttt{immediate\_pickup.} Apart from that, implementing the rules with norms felt very natural and usually easier than the equivalent counts-as rule. It was also more concise, since a single rule generates both violation and compliance records.
+
+A typical example looks like this:
+
+\begin{lstlisting}[basicstyle=\footnotesize]
+shortest_path: 
+ [picked_up_gold(P) and add(P,4,F) and add(P,3,O), 
+  O(position(X, Y) and chest(X, Y) and dropped_gold(O)), 
+  moves(F)]
+\end{lstlisting}
+
+The rule states that if the gold has been picked up in round $P$, the agent is obliged to drop the gold on the position of the chest in round $P+3$. The deadline is set to round $P+4$, because the otherwise the agent would not have time to drop the gold on the chest after reaching the chest with move $P+3$ (since the rule would already be violated).
 
 \end{document}
