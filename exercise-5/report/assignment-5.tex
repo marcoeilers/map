@@ -29,17 +29,37 @@
 \newpage
 
 \section{Common}
+\label{sec:common}
+The following subsections focus on the parts of the \texttt{.2opl} files that are either identical (facts and effects) or differ only slightly (sanctioning rules, see section~\ref{sec:norms}).
+
 \subsection{Facts}
+\label{sec:facts}
+The facts are mainly used to model the Wumpus world: the positions of the \texttt{chest}, the \texttt{wumpus}, the \texttt{gold} and the \texttt{pit}s are implemented as tuples of x- and y-coordinates. The tornadoes and the green matter are not represented as they lack documentation and effects on the agent in the exercise description. The \texttt{position} of the agent is tracked as well as the number of overall \texttt{moves} made. There is an additional fact to monitor the number of times the agent has stood on a pit (\texttt{pitpoints}). This has been introduced to update the UI properly -- the overall \texttt{points} are tracked separately.
+
+The \texttt{description}s are designed to match the output that can be seen in the screenshot of the exercise description and in the video. Lastly, we introduced a simple \texttt{add}ition function since, for example, \texttt{position(X+DX,Y+DY)} did not result in proper addition of the variable terms but rather in some sort of abstract representation like \texttt{position(+(1.0,1.0),+(1.0,0.0))} which could not be matched in counts-as rules.
 
 \subsection{Effects}
+\label{sec:effects}
+The effect rules capture the actions of the agent and update the facts accordingly. The movement effect keeps track of the number of moves made and updates the current position of the agent.
+
+Picking up gold can only be done if the agent is right above the gold. After the gold has been picked up, it is removed from the world and the current number of moves is associated with the pickup event.
+
+Similarly, gold can only be dropped if the agent is right above the chest and has picked up the gold before and not already dropped it. The moment of dropping the gold is captured by remembering the number of moves made by the agent so far.
 
 \subsection{Sanctioning Rules}
+\label{sec:sanct}
+In addition to the two sanctioning rules to let the organizations perform actions (bombarding the Wumpus and showing a message) multiple sanctioning rules have been introduced to model the required rewards and punishments for the agent. In the pre-conditions the violation/obligation has to be instantiated (see sections~\ref{sec:counts} and~\ref{sec:norms}) and the new score is calculated. In the rule body the instantiated norm is removed and the facts are updated with the new score (the old one is removed). Only when creating a violation by standing on the Wumpus the bombardment of the Wumpus is triggered and the Wumpus is removed from the facts to represent its death.
 
+Note that the delivery of gold has been coupled to the fact whether the agent took the shortest path back to the chest or not. This is to avoid multiple application of sanctioning rules at the same time with the same initial score. So instead of having to separate sanctioning rules (one for the delivery of gold, one for the taking the shortest path) which would result in two \texttt{points} facts afterwards, they have been combined and the score to be added has been adapted accordingly.
+
+Further minor modifications are discussed in section~\ref{sec:norms} because some updated to the facts could not be made from within the temporal norms and thus had to be moved to the sanctioning rules.
 
 \section{2OPL Counts-as}
-
+\label{sec:counts}
+The counts-as rules are used to map states to violations and obligations according to the bulleted list in the exercise description section~3, one for each point in corresponding order. The sanctioning rules follow in the same order. Note that we made use of "timestamps" attached to the facts of finding the gold (\texttt{found\_gold}), picking it up (\texttt{picked\_up\_gold}) and dropping it (\texttt{dropped\_gold}) to find out when punishments/rewards have to be imposed and to avoid obligations/violations after certain events took place (such as the first finding of the gold or dropping it into the chest).
 
 \section{2OPL Temporal norms}
+\label{sec:norms}
 % TODO slight modification of sanctioning rule(s)
 
 \end{document}
