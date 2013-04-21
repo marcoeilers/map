@@ -39,7 +39,7 @@ The facts are mainly used to model the Wumpus world: the positions of the \textt
 
 The \texttt{description}s are designed to match the output that can be seen in the screenshot of the exercise description and in the video. Lastly, we introduced a simple \texttt{add}ition function since, for example, \texttt{position(X+DX,Y+DY)} did not result in proper addition of the variable terms but rather in some sort of abstract representation like \texttt{position(+(1.0,1.0),+(1.0,0.0))} which could not be matched in counts-as rules.
 
-Some additional facts are introduced by the effect rules: \texttt{found\_gold(M)} records the step (i.e. the number of the agent's move) when the gold was first found. Similarly, \texttt{picked\_up\_gold(M)} is used to note when the gold was picked up. In both cases, the number of the move is used to establish a deadline for the following obligations. Finally, \texttt{dropped\_gold(M)} establishes when the gold was put back in the chest. 
+Some additional facts are introduced by the effect rules: \texttt{found\_gold(M)} records the step (i.e. the number of the agent's moves) when the gold was first found. Similarly, \texttt{picked\_up\_gold(M)} is used to note when the gold was picked up. In both cases, the number of the move is used to establish a deadline for the following obligations. Finally, \texttt{dropped\_gold(M)} establishes when the gold was put back in the chest. 
 
 \subsection{Effects}
 \label{sec:effects}
@@ -65,7 +65,7 @@ If the \texttt{immediate\_pickup} norm is violated, we first remove the record o
 
 For other rules, please have a look at the code, which is well-commented throughout.
 
-Note that the delivery of gold has been coupled to the fact whether the agent took the shortest path back to the chest or not. This is to avoid multiple application of sanctioning rules at the same time with the same initial score. So instead of having to separate sanctioning rules (one for the delivery of gold, one for the taking the shortest path) which would result in two \texttt{points} facts afterwards, they have been combined and the score to be added has been adapted accordingly.
+Note that the delivery of gold has been coupled to the fact whether the agent took the shortest path back to the chest or not. This is to avoid multiple applications of sanctioning rules at the same time with the same initial score. So instead of having two separate sanctioning rules (one for the delivery of gold, one for the taking the shortest path) which would result in two \texttt{points} facts afterwards, they have been combined and the score to be added has been adapted accordingly.
 
 Further minor modifications are discussed in section~\ref{sec:norms} because some updates to the facts could not be made from within the temporal norms and thus had to be moved to the sanctioning rules.
 
@@ -75,7 +75,7 @@ We converted the given rules following norms:
   \item \texttt{find\_gold} describes the obligation to find the gold
   \item \texttt{immediate\_pickup} describes the obligation to pick up the gold immediately after finding it (i.e. before moving anywhere else)
   \item \texttt{deliver\_gold} describes the obligation to deliver the gold back to the chest
-  \item \texttt{shortest\_path} describes the obligation to use the shortes path back to the chest, i.e. to use at most three steps
+  \item \texttt{shortest\_path} describes the obligation to use the shortest path back to the chest, i.e. to use at most three steps
   \item \texttt{dont\_stand\_on\_wumpus(X,Y)} describes the prohibition of stepping on a wumpus
   \item \texttt{dont\_stand\_on\_pit} describes the prohibition of walking into pits
 \end{itemize}
@@ -110,6 +110,6 @@ shortest_path:
   moves(F)]
 \end{lstlisting}
 
-The rule states that if the gold has been picked up in round $P$, the agent is obliged to drop the gold on the position of the chest in round $P+3$. The deadline is set to round $P+4$, because the otherwise the agent would not have time to drop the gold on the chest after reaching the chest with move $P+3$ (since the rule would already be violated).
+The rule states that if the gold has been picked up in round $P$, the agent is obliged to drop the gold on the position of the chest in round $P+3$. The deadline is set to round $P+4$, because otherwise the agent would not have time to drop the gold on the chest after reaching the chest with move $P+3$ (since the rule would already be violated).
 
 \end{document}
