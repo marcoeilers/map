@@ -59,18 +59,8 @@ Effects:
   { dropped_gold(M) }
 
 Temporal norms:
-  // standing on a pit is always a violation (i.e. no precondition, no deadline)
-  dont_stand_on_pit: [true, F(position(X,Y) and pit(X,Y)), false]
-
-  // standing on a living wumpus is always a violation
-  dont_stand_on_wumpus(X,Y): [true, F(position(X, Y) and wumpus(X, Y)), false]
-
   // finding the gold is an obligation without a deadline
   find_gold: [not found_gold(_), O(position(X, Y) and gold(X, Y)), false]
-
-  // the gold must be delivered at most three moves after picking it up,
-  // meaning that 4 moves after that the deadline is over
-  shortest_path: [picked_up_gold(P) and add(P,4,F) and add(P,3,O), O(position(X, Y) and chest(X, Y) and dropped_gold(O)), moves(F)]
 
   // if the agent has not moved before picking up the gold,
   // then he obeys the immediate pickup property
@@ -79,9 +69,18 @@ Temporal norms:
   immediate_pickup: [found_gold(F) and add(F,1,M) and moves(F) and picked_up_gold(F), O(picked_up_gold(F)), moves(M)]
   immediate_pickup: [found_gold(F) and add(F,1,M) and moves(M) and not picked_up_gold(_), O(picked_up_gold(F)), moves(M)]
 
-  // if the agent is at the chest and dropped the gold,
-  // then he obeyed to deliver the gold
+  // the agent is obliged to deliver the gold to the chest, but there is no deadline
   deliver_gold: [true, O(moves(M) and position(X, Y) and chest(X, Y) and dropped_gold(M)), false]
+
+  // the gold must be delivered at most three moves after picking it up,
+  // meaning that 4 moves after that the deadline is over
+  shortest_path: [picked_up_gold(P) and add(P,4,F) and add(P,3,O), O(position(X, Y) and chest(X, Y) and dropped_gold(O)), moves(F)]
+
+  // standing on a living wumpus is always a violation
+  dont_stand_on_wumpus(X,Y): [true, F(position(X, Y) and wumpus(X, Y)), false]
+
+  // standing on a pit is always a violation (i.e. no precondition, no deadline)
+  dont_stand_on_pit: [true, F(position(X,Y) and pit(X,Y)), false]
 
 Sanction rules:
   // standing on a pit is punished with deduction of 1 point
