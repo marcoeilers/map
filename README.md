@@ -1,4 +1,4 @@
 map
 ===
 
-Multi Agent Programming @ Utrect University
+Multi Agent Programming 2013 @ CS UU
